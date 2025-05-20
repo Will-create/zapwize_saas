@@ -1,0 +1,373 @@
+import { useState, useEffect } from 'react';
+import { Line, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement,
+} from 'chart.js';
+import { MessageSquare, Users, ArrowUpRight, ArrowDownRight } from 'lucide-react';
+import { format } from 'date-fns';
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  ArcElement
+);
+
+// Mock data for bots and numbers
+const mockBots = [
+  { id: 'bot1', name: 'Customer Support Bot' },
+  { id: 'bot2', name: 'Sales Assistant Bot' },
+];
+
+const mockNumbers = [
+  { id: 'num1', name: 'Main Support (+1234567890)' },
+  { id: 'num2', name: 'Sales Team (+0987654321)' },
+];
+
+const DashboardPage = () => {
+  const [messageStats, setMessageStats] = useState({
+    total: 12500,
+    increase: 15.8,
+    data: Array.from({ length: 7 }, () => Math.floor(Math.random() * 500) + 1000),
+  });
+
+  const [userStats, setUserStats] = useState({
+    total: 2800,
+    increase: -5.2,
+    data: Array.from({ length: 7 }, () => Math.floor(Math.random() * 200) + 200),
+  });
+
+  const [selectedBot, setSelectedBot] = useState<string>('all');
+  const [selectedNumber, setSelectedNumber] = useState<string>('all');
+
+  // Generate mock data for bot and number charts
+  const generateChartData = (id: string) => ({
+    messages: Array.from({ length: 7 }, () => Math.floor(Math.random() * 500) + 500),
+    success: Math.floor(Math.random() * 20) + 80,
+    failed: Math.floor(Math.random() * 10),
+    pending: Math.floor(Math.random() * 10),
+  });
+
+  const [botChartData, setBotChartData] = useState(generateChartData('all'));
+  const [numberChartData, setNumberChartData] = useState(generateChartData('all'));
+
+  // Update chart data when selection changes
+  useEffect(() => {
+    setBotChartData(generateChartData(selectedBot));
+  }, [selectedBot]);
+
+  useEffect(() => {
+    setNumberChartData(generateChartData(selectedNumber));
+  }, [selectedNumber]);
+
+  // Chart data
+  const lineChartData = {
+    labels: Array.from({ length: 7 }, (_, i) => 
+      format(new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000), 'MMM dd')
+    ),
+    datasets: [
+      {
+        label: 'Messages',
+        data: messageStats.data,
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const doughnutData = {
+    labels: ['Sent', 'Received', 'Failed'],
+    datasets: [
+      {
+        data: [65, 30, 5],
+        backgroundColor: [
+          'rgb(34, 197, 94)',
+          'rgb(59, 130, 246)',
+          'rgb(239, 68, 68)',
+        ],
+      },
+    ],
+  };
+
+  // Bot performance chart data
+  const botLineChartData = {
+    labels: Array.from({ length: 7 }, (_, i) => 
+      format(new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000), 'MMM dd')
+    ),
+    datasets: [
+      {
+        label: 'Messages Processed',
+        data: botChartData.messages,
+        borderColor: 'rgb(34, 197, 94)',
+        backgroundColor: 'rgba(34, 197, 94, 0.5)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const botDoughnutData = {
+    labels: ['Success', 'Failed', 'Pending'],
+    datasets: [
+      {
+        data: [botChartData.success, botChartData.failed, botChartData.pending],
+        backgroundColor: [
+          'rgb(34, 197, 94)',
+          'rgb(239, 68, 68)',
+          'rgb(234, 179, 8)',
+        ],
+      },
+    ],
+  };
+
+  // Number performance chart data
+  const numberLineChartData = {
+    labels: Array.from({ length: 7 }, (_, i) => 
+      format(new Date(Date.now() - (6 - i) * 24 * 60 * 60 * 1000), 'MMM dd')
+    ),
+    datasets: [
+      {
+        label: 'Messages',
+        data: numberChartData.messages,
+        borderColor: 'rgb(59, 130, 246)',
+        backgroundColor: 'rgba(59, 130, 246, 0.5)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const numberDoughnutData = {
+    labels: ['Delivered', 'Failed', 'Pending'],
+    datasets: [
+      {
+        data: [numberChartData.success, numberChartData.failed, numberChartData.pending],
+        backgroundColor: [
+          'rgb(59, 130, 246)',
+          'rgb(239, 68, 68)',
+          'rgb(234, 179, 8)',
+        ],
+      },
+    ],
+  };
+
+  // Chart options
+  const lineChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: {
+        beginAtZero: true,
+        grid: {
+          display: false,
+        },
+        ticks: {
+          maxTicksLimit: 5,
+        },
+      },
+      x: {
+        grid: {
+          display: false,
+        },
+      },
+    },
+    plugins: {
+      legend: {
+        display: false,
+      },
+    },
+  };
+
+  const doughnutChartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom' as const,
+      },
+    },
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
+        <p className="text-gray-600 mt-1">Overview of your WhatsApp messaging activity</p>
+      </div>
+
+      {/* Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Total Messages</p>
+              <p className="text-2xl font-bold text-gray-900">{messageStats.total.toLocaleString()}</p>
+            </div>
+            <div className="bg-green-100 p-3 rounded-lg">
+              <MessageSquare className="h-6 w-6 text-green-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
+            <span className="text-green-500 text-sm font-medium">+{messageStats.increase}%</span>
+            <span className="text-gray-500 text-sm ml-2">vs last week</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Active Users</p>
+              <p className="text-2xl font-bold text-gray-900">{userStats.total.toLocaleString()}</p>
+            </div>
+            <div className="bg-blue-100 p-3 rounded-lg">
+              <Users className="h-6 w-6 text-blue-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <ArrowDownRight className="h-4 w-4 text-red-500 mr-1" />
+            <span className="text-red-500 text-sm font-medium">{userStats.increase}%</span>
+            <span className="text-gray-500 text-sm ml-2">vs last week</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Delivery Rate</p>
+              <p className="text-2xl font-bold text-gray-900">98.5%</p>
+            </div>
+            <div className="bg-purple-100 p-3 rounded-lg">
+              <MessageSquare className="h-6 w-6 text-purple-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <ArrowUpRight className="h-4 w-4 text-green-500 mr-1" />
+            <span className="text-green-500 text-sm font-medium">+0.8%</span>
+            <span className="text-gray-500 text-sm ml-2">vs last week</span>
+          </div>
+        </div>
+
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600">Response Time</p>
+              <p className="text-2xl font-bold text-gray-900">1.2m</p>
+            </div>
+            <div className="bg-yellow-100 p-3 rounded-lg">
+              <MessageSquare className="h-6 w-6 text-yellow-600" />
+            </div>
+          </div>
+          <div className="mt-4 flex items-center">
+            <ArrowDownRight className="h-4 w-4 text-green-500 mr-1" />
+            <span className="text-green-500 text-sm font-medium">-15s</span>
+            <span className="text-gray-500 text-sm ml-2">vs last week</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Bot Performance */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Bot Performance</h3>
+            <select
+              value={selectedBot}
+              onChange={(e) => setSelectedBot(e.target.value)}
+              className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Bots</option>
+              {mockBots.map((bot) => (
+                <option key={bot.id} value={bot.id}>{bot.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-[300px]">
+              <Line data={botLineChartData} options={lineChartOptions} />
+            </div>
+            <div className="h-[300px]">
+              <Doughnut data={botDoughnutData} options={doughnutChartOptions} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Number Performance */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="p-6 border-b border-gray-200">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-medium text-gray-900">Number Performance</h3>
+            <select
+              value={selectedNumber}
+              onChange={(e) => setSelectedNumber(e.target.value)}
+              className="block w-48 pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
+            >
+              <option value="all">All Numbers</option>
+              {mockNumbers.map((number) => (
+                <option key={number.id} value={number.id}>{number.name}</option>
+              ))}
+            </select>
+          </div>
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="h-[300px]">
+              <Line data={numberLineChartData} options={lineChartOptions} />
+            </div>
+            <div className="h-[300px]">
+              <Doughnut data={numberDoughnutData} options={doughnutChartOptions} />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent Activity */}
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-medium text-gray-900">Recent Activity</h3>
+        </div>
+        <div className="divide-y divide-gray-200">
+          {[
+            { type: 'message', text: 'New campaign "Summer Sale" created', time: '2 hours ago' },
+            { type: 'user', text: 'New WhatsApp number linked', time: '4 hours ago' },
+            { type: 'system', text: 'System maintenance completed', time: '8 hours ago' },
+            { type: 'message', text: 'Bulk message campaign completed', time: '1 day ago' },
+          ].map((activity, index) => (
+            <div key={index} className="px-6 py-4">
+              <div className="flex items-center">
+                <div className="flex-shrink-0">
+                  <div className={`h-8 w-8 rounded-full flex items-center justify-center ${
+                    activity.type === 'message' ? 'bg-green-100' :
+                    activity.type === 'user' ? 'bg-blue-100' : 'bg-gray-100'
+                  }`}>
+                    <MessageSquare className={`h-4 w-4 ${
+                      activity.type === 'message' ? 'text-green-600' :
+                      activity.type === 'user' ? 'text-blue-600' : 'text-gray-600'
+                    }`} />
+                  </div>
+                </div>
+                <div className="ml-4">
+                  <p className="text-sm font-medium text-gray-900">{activity.text}</p>
+                  <p className="text-sm text-gray-500">{activity.time}</p>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default DashboardPage;

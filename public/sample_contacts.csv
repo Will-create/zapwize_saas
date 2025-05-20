@@ -1,0 +1,4 @@
+phoneNumber,name,orderId,amount
++1234567890,John Doe,ORD-001,99.99
++1987654321,Jane Smith,ORD-002,149.99
++1122334455,Bob Wilson,ORD-003,79.99
