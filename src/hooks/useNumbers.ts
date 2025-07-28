@@ -4,24 +4,22 @@ import { numbersService } from '../services/api';
 // Types
 type NumberStatus = 'connected' | 'pending' | 'disconnected';
 
-type WhatsAppNumber = {
+export type WhatsAppNumber = {
   id: string;
   name: string;
   phonenumber: string;
-  webhook: string;
-  url: string;
+  webhookUrl: string;
   baseurl: string;
-  token: string;
-  xtoken: string;
   status: NumberStatus;
   createdAt: string;
+  value?: string; // For QR code or pairing code
 };
 
 type AddNumberData = {
-  id: string;
   name: string;
   phonenumber: string;
   webhook: string;
+  type: 'code' | 'qrcode';
 };
 
 export const useNumbers = () => {
@@ -56,13 +54,15 @@ export const useNumbers = () => {
       setError(null);
       const response = await numbersService.create({
         name: data.name,
-        phoneNumber: data.phoneNumber,
-        webhookUrl: data.webhookUrl
+        phone: data.phonenumber,
+        webhook: data.webhook,
+        type: data.type
       });
       
       if (response.success) {
-        setNumbers([...numbers, response.value]);
-        return response.value;
+        const newNumber = { ...response.value, phonenumber: data.phonenumber, type: data.type };
+        setNumbers([...numbers, newNumber]);
+        return newNumber;
       }
     } catch (err: any) {
       console.error('Error adding number:', err);
@@ -71,13 +71,16 @@ export const useNumbers = () => {
   };
 
   // Update a number's status (e.g., after reconnection)
-  const reconnectNumber = async (id: string) => {
+  const reconnectNumber = async (phone: string) => {
     try {
       setError(null);
-      const response = await numbersService.read(id);
+      const numberToUpdate = numbers.find(n => n.phonenumber === phone);
+      if (!numberToUpdate) throw new Error('Number not found');
+      
+      const response = await numbersService.read(numberToUpdate.id);
       if (response.success) {
         setNumbers(numbers.map(number => 
-          number.id === id ? response.value : number
+          number.id === numberToUpdate.id ? response.value : number
         ));
       }
     } catch (err: any) {

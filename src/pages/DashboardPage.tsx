@@ -12,7 +12,7 @@ import {
 } from 'chart.js';
 import { MessageSquare, Activity, ArrowUpRight, ArrowDownRight, Phone } from 'lucide-react';
 import { format } from 'date-fns';
-
+import { useNumbers } from '../hooks/useNumbers'
 // Register ChartJS components
 ChartJS.register(
   CategoryScale,
@@ -65,8 +65,9 @@ const generateNumberData = (numberId: string) => {
 
 const DashboardPage = () => {
   const [selectedNumber, setSelectedNumber] = useState<string>('all');
-  const [numberData, setNumberData] = useState(generateNumberData('all'));
-
+  const { numbers } = useNumbers();
+  const [numberData, setNumberData] = useState(numbers);
+  
   // Update data when selected number changes
   useEffect(() => {
     setNumberData(generateNumberData(selectedNumber));

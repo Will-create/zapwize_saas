@@ -1,51 +1,68 @@
-import { useState, useEffect } from 'react';
-import { X, RefreshCw, QrCode, Check } from 'lucide-react';
+import { useState, useEffect, useCallback } from 'react';
+import { X, RefreshCw, Check, AlertCircle } from 'lucide-react';
+
+export type ConnectionData = {
+  phone: string;
+  baseurl: string;
+  value?: string; // QR code data or pairing code
+  type: 'qrcode' | 'code';
+};
 
 type QRScanModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  numberId: string;
+  connectionData: ConnectionData;
   onSuccess: () => void;
+  onError?: (error: string) => void;
 };
 
-const QRScanModal = ({ isOpen, onClose, numberId, onSuccess }: QRScanModalProps) => {
-  const [isLoading, setIsLoading] = useState(true);
-  const [method, setMethod] = useState<'qr' | 'code'>('qr');
-  const [confirmationCode, setConfirmationCode] = useState<string>('');
-  const [isConnected, setIsConnected] = useState(false);
-  const [timeLeft, setTimeLeft] = useState(60);
+type ConnectionState = 'connecting' | 'waiting' | 'connected' | 'expired' | 'error';
 
-  // Generate a random QR code pattern (this is just for demo purposes)
-  const generateQRPattern = () => {
-    const size = 10;
-    const pattern = [];
-    for (let i = 0; i < size; i++) {
-      const row = [];
-      for (let j = 0; j < size; j++) {
-        row.push(Math.random() > 0.5 ? 1 : 0);
+const QRScanModal = ({ 
+  isOpen, 
+  onClose, 
+  connectionData, 
+  onSuccess, 
+  onError 
+}: QRScanModalProps) => {
+  const [connectionState, setConnectionState] = useState<ConnectionState>('connecting');
+  const [qrCodeData, setQrCodeData] = useState<string>('');
+  const [pairingCode, setPairingCode] = useState<string>('');
+  const [timeLeft, setTimeLeft] = useState(30); // 30 seconds for QR, will be set to 360 for pairing
+  const [error, setError] = useState<string>('');
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const isQRCode = connectionData.type === 'qrcode';
+  const maxTime = isQRCode ? 30 : 360; // 30 seconds for QR, 6 minutes for pairing
+
+  // Initialize timer based on connection type
+  useEffect(() => {
+    if (isOpen) {
+      setTimeLeft(maxTime);
+      setConnectionState('connecting');
+      setError('');
+      
+      // Set initial data if available
+      if (connectionData.value) {
+        if (isQRCode) {
+          setQrCodeData(connectionData.value);
+        } else {
+          setPairingCode(connectionData.value);
+        }
+        setConnectionState('waiting');
       }
-      pattern.push(row);
     }
-    return pattern;
-  };
+  }, [isOpen, connectionData, isQRCode, maxTime]);
 
-  const [qrPattern, setQrPattern] = useState(generateQRPattern());
-
-  // Generate random confirmation code (this is just for demo purposes)
+  // Countdown timer
   useEffect(() => {
-    if (method === 'code') {
-      setConfirmationCode(Math.floor(100000 + Math.random() * 900000).toString());
-    }
-  }, [method]);
-
-  // Start countdown timer
-  useEffect(() => {
-    if (!isOpen || isConnected) return;
+    if (!isOpen || connectionState !== 'waiting') return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
         if (prev <= 1) {
           clearInterval(timer);
+          setConnectionState('expired');
           return 0;
         }
         return prev - 1;
@@ -53,47 +70,165 @@ const QRScanModal = ({ isOpen, onClose, numberId, onSuccess }: QRScanModalProps)
     }, 1000);
 
     return () => clearInterval(timer);
-  }, [isOpen, isConnected]);
+  }, [isOpen, connectionState]);
 
-  // Simulate QR code loading
+  // Auto-refresh QR code every 30 seconds
   useEffect(() => {
-    if (!isOpen) return;
-    
-    setIsLoading(true);
-    const timeout = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500);
-    
-    return () => clearTimeout(timeout);
-  }, [isOpen, method]);
+    if (!isOpen || !isQRCode || connectionState !== 'waiting') return;
 
-  // Simulate connection (for demo purposes)
+    const refreshInterval = setInterval(() => {
+      refreshConnection();
+    }, 30000);
+
+    return () => clearInterval(refreshInterval);
+  }, [isOpen, isQRCode, connectionState]);
+
+  // Poll for connection status
   useEffect(() => {
-    if (!isOpen || isConnected) return;
-    
-    const timeout = setTimeout(() => {
-      // 30% chance of successful connection after 20 seconds
-      if (Math.random() < 0.3) {
-        setIsConnected(true);
-        
-        // Call onSuccess after showing confirmation for 2 seconds
-        setTimeout(() => {
-          onSuccess();
-        }, 2000);
+    if (!isOpen || connectionState !== 'waiting') return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const response = await fetch(`${connectionData.baseurl}/api/instances/${connectionData.phone}`, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.state === 'open' || data.state === 'connected') {
+            setConnectionState('connected');
+            clearInterval(pollInterval);
+            
+            // Show success message briefly then call onSuccess
+            setTimeout(() => {
+              onSuccess();
+            }, 2000);
+          }
+        }
+      } catch (error) {
+        console.error('Error polling connection status:', error);
       }
-    }, 20000);
-    
-    return () => clearTimeout(timeout);
-  }, [isOpen, isConnected, onSuccess]);
+    }, 3000); // Poll every 3 seconds
 
-  const refreshQR = () => {
-    setIsLoading(true);
-    setTimeLeft(60);
+    return () => clearInterval(pollInterval);
+  }, [isOpen, connectionState, connectionData, onSuccess]);
+
+  const refreshConnection = useCallback(async () => {
+    if (isRefreshing) return;
     
-    setTimeout(() => {
-      setQrPattern(generateQRPattern());
-      setIsLoading(false);
-    }, 1000);
+    setIsRefreshing(true);
+    setError('');
+
+    try {
+      const endpoint = isQRCode 
+        ? `${connectionData.baseurl}/api/instances/${connectionData.phone}/qr`
+        : `${connectionData.baseurl}/api/instances/${connectionData.phone}/pairing`;
+
+      const response = await fetch(endpoint, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error(`Failed to refresh: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      
+      if (data.value) {
+        if (isQRCode) {
+          setQrCodeData(data.value);
+        } else {
+          setPairingCode(data.value);
+        }
+        setTimeLeft(maxTime);
+        setConnectionState('waiting');
+      } else {
+        throw new Error('No connection data received');
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to refresh connection';
+      setError(errorMessage);
+      setConnectionState('error');
+      onError?.(errorMessage);
+    } finally {
+      setIsRefreshing(false);
+    }
+  }, [isRefreshing, isQRCode, connectionData, maxTime, onError]);
+
+  const formatTime = (seconds: number) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins}:${secs.toString().padStart(2, '0')}`;
+  };
+
+  const renderQRCode = () => {
+    if (!qrCodeData) {
+      return (
+        <div className="w-64 h-64 bg-gray-100 flex items-center justify-center rounded-lg">
+          <RefreshCw size={32} className="text-gray-400 animate-spin" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="relative">
+        <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-sm">
+          <img 
+            src={`data:image/png;base64,${qrCodeData}`}
+            alt="WhatsApp QR Code"
+            className="w-64 h-64 object-contain"
+            onError={(e) => {
+              // Fallback if the QR code is not a base64 image
+              e.currentTarget.style.display = 'none';
+              e.currentTarget.nextElementSibling?.removeAttribute('hidden');
+            }}
+          />
+          <div hidden className="w-64 h-64 bg-gray-100 flex items-center justify-center">
+            <p className="text-gray-500 text-center">QR Code Error</p>
+          </div>
+        </div>
+        
+        {connectionState === 'expired' && (
+          <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
+            <div className="text-center">
+              <p className="text-gray-600 mb-2">QR code expired</p>
+              <button
+                onClick={refreshConnection}
+                disabled={isRefreshing}
+                className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
+              >
+                <RefreshCw size={14} className={`mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                Refresh QR Code
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderPairingCode = () => {
+    if (!pairingCode) {
+      return (
+        <div className="w-full h-16 bg-gray-100 flex items-center justify-center rounded-lg">
+          <RefreshCw size={24} className="text-gray-400 animate-spin" />
+        </div>
+      );
+    }
+
+    return (
+      <div className="bg-gray-100 px-8 py-4 rounded-lg">
+        <span className="text-3xl font-mono font-bold tracking-wider text-gray-800 select-all">
+          {pairingCode}
+        </span>
+      </div>
+    );
   };
 
   if (!isOpen) return null;
@@ -121,33 +256,15 @@ const QRScanModal = ({ isOpen, onClose, numberId, onSuccess }: QRScanModalProps)
           </div>
 
           <div className="p-6">
-            {/* Method selector */}
-            <div className="mb-6">
-              <div className="flex border border-gray-300 rounded-lg overflow-hidden">
-                <button
-                  className={`flex-1 py-2 px-4 text-sm font-medium ${
-                    method === 'qr'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setMethod('qr')}
-                >
-                  Scan QR Code
-                </button>
-                <button
-                  className={`flex-1 py-2 px-4 text-sm font-medium ${
-                    method === 'code'
-                      ? 'bg-green-600 text-white'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                  onClick={() => setMethod('code')}
-                >
-                  Confirmation Code
-                </button>
+            {/* Error message */}
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md flex items-start">
+                <AlertCircle size={16} className="text-red-600 mt-0.5 mr-2 flex-shrink-0" />
+                <p className="text-sm text-red-600">{error}</p>
               </div>
-            </div>
+            )}
 
-            {isConnected ? (
+            {connectionState === 'connected' ? (
               <div className="text-center py-8">
                 <div className="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-green-100 mb-4">
                   <Check size={24} className="text-green-600" />
@@ -159,74 +276,30 @@ const QRScanModal = ({ isOpen, onClose, numberId, onSuccess }: QRScanModalProps)
                   Your WhatsApp number has been successfully linked to your account.
                 </p>
               </div>
-            ) : method === 'qr' ? (
+            ) : isQRCode ? (
               <div className="text-center">
                 <h4 className="text-base font-medium text-gray-900 mb-4">
                   Scan this QR code with WhatsApp on your phone
                 </h4>
                 
                 <div className="flex justify-center mb-4">
-                  {isLoading ? (
-                    <div className="w-56 h-56 bg-gray-100 flex items-center justify-center">
-                      <RefreshCw size={32} className="text-gray-400 animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="relative">
-                      <div className="bg-white p-2 border border-gray-300 rounded-lg shadow-sm">
-                        {/* QR code visualization (simplified for demo) */}
-                        <div className="w-56 h-56 grid grid-cols-10 gap-0">
-                          {qrPattern.flatMap((row, i) => 
-                            row.map((cell, j) => (
-                              <div
-                                key={`${i}-${j}`}
-                                className={`${cell ? 'bg-black' : 'bg-white'}`}
-                              />
-                            ))
-                          )}
-                        </div>
-                      </div>
-                      
-                      {timeLeft === 0 && (
-                        <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
-                          <div className="text-center">
-                            <p className="text-gray-600 mb-2">QR code expired</p>
-                            <button
-                              onClick={refreshQR}
-                              className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-                            >
-                              <RefreshCw size={14} className="mr-1" />
-                              Refresh QR Code
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  )}
+                  {renderQRCode()}
                 </div>
                 
-                {!isLoading && timeLeft > 0 && (
+                {connectionState === 'waiting' && timeLeft > 0 && (
                   <p className="text-sm text-gray-500 mb-3">
                     QR code expires in <span className="font-medium">{timeLeft}</span> seconds
                   </p>
                 )}
                 
-                <p className="text-sm text-gray-500 mb-4">
-                  1. Open WhatsApp on your phone
-                  <br />
-                  2. Tap Menu or Settings and select Linked Devices
-                  <br />
-                  3. Point your phone at this screen to scan the code
-                </p>
+                <div className="text-sm text-gray-500 mb-4 space-y-1">
+                  <p>1. Open WhatsApp on your phone</p>
+                  <p>2. Tap Menu or Settings and select Linked Devices</p>
+                  <p>3. Point your phone at this screen to scan the code</p>
+                </div>
                 
-                <p className="text-sm text-gray-500">
-                  Having trouble? Try the{' '}
-                  <button
-                    onClick={() => setMethod('code')}
-                    className="text-green-600 hover:text-green-700 font-medium"
-                  >
-                    confirmation code
-                  </button>{' '}
-                  method instead
+                <p className="text-xs text-gray-400">
+                  Phone number: {connectionData.phone}
                 </p>
               </div>
             ) : (
@@ -236,59 +309,58 @@ const QRScanModal = ({ isOpen, onClose, numberId, onSuccess }: QRScanModalProps)
                 </h4>
                 
                 <div className="flex justify-center mb-6">
-                  {isLoading ? (
-                    <div className="w-full h-16 bg-gray-100 flex items-center justify-center rounded-lg">
-                      <RefreshCw size={24} className="text-gray-400 animate-spin" />
-                    </div>
-                  ) : (
-                    <div className="bg-gray-100 px-8 py-3 rounded-lg">
-                      <span className="text-2xl font-mono font-bold tracking-wider text-gray-800">
-                        {confirmationCode}
-                      </span>
-                    </div>
-                  )}
+                  {renderPairingCode()}
                 </div>
                 
-                <p className="text-sm text-gray-500 mb-4">
-                  1. Open WhatsApp on your phone
-                  <br />
-                  2. Send the code above to{' '}
-                  <span className="font-medium">+1 555-123-4567</span>
-                  <br />
-                  3. Wait for connection to be established
-                </p>
+                {connectionState === 'waiting' && (
+                  <p className="text-sm text-gray-500 mb-3">
+                    Code expires in <span className="font-medium">{formatTime(timeLeft)}</span>
+                  </p>
+                )}
                 
-                <p className="text-sm text-gray-500">
-                  Prefer to scan a QR code?{' '}
-                  <button
-                    onClick={() => setMethod('qr')}
-                    className="text-green-600 hover:text-green-700 font-medium"
-                  >
-                    Switch to QR code
-                  </button>
+                <div className="text-sm text-gray-500 mb-4 space-y-1">
+                  <p>1. Open WhatsApp on your phone</p>
+                  <p>2. Go to Settings → Linked Devices</p>
+                  <p>3. Tap "Link a Device" → "Link with phone number instead"</p>
+                  <p>4. Send the code above to: <span className="font-medium">{connectionData.phone}</span></p>
+                </div>
+                
+                <p className="text-xs text-gray-400">
+                  Phone number: {connectionData.phone}
                 </p>
               </div>
             )}
           </div>
 
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 sm:flex sm:flex-row-reverse">
+            {(connectionState === 'expired' || connectionState === 'error') && !isQRCode && (
+              <button
+                type="button"
+                onClick={refreshConnection}
+                disabled={isRefreshing}
+                className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
+              >
+                {isRefreshing ? (
+                  <>
+                    <RefreshCw size={16} className="mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw size={16} className="mr-2" />
+                    Generate New Code
+                  </>
+                )}
+              </button>
+            )}
+            
             <button
               type="button"
               onClick={onClose}
-              className="w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
+              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
             >
-              Cancel
+              {connectionState === 'connected' ? 'Close' : 'Cancel'}
             </button>
-            {timeLeft === 0 && method === 'qr' && (
-              <button
-                type="button"
-                onClick={refreshQR}
-                className="mt-3 w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
-              >
-                <RefreshCw size={16} className="mr-2" />
-                Refresh QR Code
-              </button>
-            )}
           </div>
         </div>
       </div>

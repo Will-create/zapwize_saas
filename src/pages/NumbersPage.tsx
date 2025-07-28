@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Plus, Search, QrCode, RefreshCw, Edit, Trash2, ExternalLink as External, Power, PowerOff } from 'lucide-react';
 import AddNumberModal from '../components/numbers/AddNumberModal';
-import QRScanModal from '../components/numbers/QRScanModal';
+import QRScanModal, { ConnectionData } from '../components/numbers/QRScanModal';
 import { useNumbers } from '../hooks/useNumbers';
 import Badge from '../components/ui/Badge';
 import Toast from '../components/ui/Toast';
@@ -15,7 +15,7 @@ const NumbersPage = () => {
     type: 'remove' | 'stop' | 'logout';
     id: string;
   } | null>(null);
-  const [selectedNumber, setSelectedNumber] = useState<string | null>(null);
+  const [connectionData, setConnectionData] = useState<ConnectionData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [toast, setToast] = useState<{
     show: boolean;
@@ -45,8 +45,15 @@ const NumbersPage = () => {
   );
 
   const handleReconnect = (id: string) => {
-    setSelectedNumber(id);
-    setIsQRModalOpen(true);
+    const number = numbers.find(n => n.id === id);
+    if (number) {
+      setConnectionData({ 
+        phone: number.phonenumber, 
+        baseurl: number.baseurl, 
+        type: 'qrcode' 
+      });
+      setIsQRModalOpen(true);
+    }
   };
 
   const handleAction = async () => {
@@ -289,7 +296,12 @@ const NumbersPage = () => {
             try {
               const newNumber = await addNumber(data);
               if (newNumber) {
-                setSelectedNumber(newNumber.id);
+                setConnectionData({ 
+                  phone: newNumber.phonenumber, 
+                  baseurl: newNumber.baseurl, 
+                  value: newNumber.value, 
+                  type: data.type 
+                });
                 setIsAddModalOpen(false);
                 setIsQRModalOpen(true);
                 setToast({
@@ -310,17 +322,17 @@ const NumbersPage = () => {
       )}
 
       {/* QR Code Modal */}
-      {isQRModalOpen && selectedNumber && (
+      {isQRModalOpen && connectionData && (
         <QRScanModal 
           isOpen={isQRModalOpen}
           onClose={() => {
             setIsQRModalOpen(false);
-            setSelectedNumber(null);
+            setConnectionData(null);
           }}
-          numberId={selectedNumber}
+          connectionData={connectionData}
           onSuccess={async () => {
             try {
-              await reconnectNumber(selectedNumber);
+              await reconnectNumber(connectionData.phone);
               setToast({
                 show: true,
                 message: 'WhatsApp number connected successfully',
@@ -334,7 +346,7 @@ const NumbersPage = () => {
               });
             } finally {
               setIsQRModalOpen(false);
-              setSelectedNumber(null);
+              setConnectionData(null);
             }
           }}
         />

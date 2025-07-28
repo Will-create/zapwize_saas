@@ -147,7 +147,7 @@ export const authService = {
 
 // Numbers service implementation
 export const numbersService = {
-  create: async (data: { name: string; phoneNumber: string; webhookUrl: string }) => {
+  create: async (data: { name: string; phone: string; webhook: string, type: string }) => {
     return makeApiRequest('numbers_insert', data);
   },
 
