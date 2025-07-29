@@ -164,11 +164,22 @@ export const numbersService = {
   },
 
   logout: async (id: string) => {
-    return makeApiRequest('numbers_logout', { id });
+    return makeApiRequest('numbers_logout/' + id);
+  },
+  pause: async (id: string) => {
+    return makeApiRequest('numbers_pause/' + id);
+  },
+
+  resume: async (id: string) => {
+    return makeApiRequest('numbers_resume/' + id);
   },
 
   stop: async (id: string) => {
-    return makeApiRequest('numbers_stop', { id });
+    return makeApiRequest('numbers_pause/' + id);
+  },
+
+  status: async (id: string) => {
+    return makeApiRequest('numbers_status/' + id);
   }
 };
 

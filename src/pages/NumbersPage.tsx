@@ -11,6 +11,7 @@ const NumbersPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [isAddingNumber, setIsAddingNumber] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: 'remove' | 'stop' | 'logout';
     id: string;
@@ -292,9 +293,10 @@ const NumbersPage = () => {
         <AddNumberModal 
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)} 
-          isLoading={isLoading}
+          isLoading={isAddingNumber}
           onSubmit={async (data) => {
             try {
+              setIsAddingNumber(true);
               const newNumber = await addNumber(data);
               if (newNumber) {
                 setConnectionData({ 
@@ -318,6 +320,9 @@ const NumbersPage = () => {
                 message,
                 type: 'error',
               });
+              throw err; // Re-throw the error to be caught by the modal
+            } finally {
+              setIsAddingNumber(false);
             }
           }}
         />

@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { X, QrCode, KeyRound } from 'lucide-react';
+import { X, QrCode, KeyRound, RefreshCw } from 'lucide-react';
 
 type AddNumberFormData = {
   id?: string,
@@ -126,9 +126,15 @@ const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNum
       setWebhook('');
       setType('qrcode');
       setErrors({});
-    } catch (error) {
+    } catch (error: any) {
+      let errorMessage = typeof(error) == 'string' ? error: null;
+      
+      if (!errorMessage)
+        errorMessage = error.response?.data?.error || 
+                         (Array.isArray(error) && error[0]?.error) || 
+                         (error instanceof Error ? error.message : 'An unexpected error occurred');
       setErrors({
-        general: error instanceof Error ? error.message : 'An error occurred while creating the number'
+        general: `Failed to create number: ${errorMessage}`
       });
     }
   };
@@ -154,7 +160,7 @@ const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNum
           {isLoading ? (
             <div className="p-6 text-center">
               <div className="animate-pulse">
-                <QrCode size={48} className="mx-auto text-green-500" />
+                <RefreshCw size={48} className="mx-auto text-green-500" />
                 <h3 className="mt-4 text-lg font-medium text-gray-900">Creating Your Number...</h3>
                 <p className="mt-2 text-sm text-gray-600">
                   This may take a few moments. Please don't close this window.
