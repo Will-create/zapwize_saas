@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, RefreshCw, Check, AlertCircle } from 'lucide-react';
+import { QRCodeSVG as QRCode } from 'qrcode.react';
 
 export type ConnectionData = {
   phone: string;
@@ -179,19 +180,7 @@ const QRScanModal = ({
     return (
       <div className="relative">
         <div className="bg-white p-4 border border-gray-300 rounded-lg shadow-sm">
-          <img 
-            src={`data:image/png;base64,${qrCodeData}`}
-            alt="WhatsApp QR Code"
-            className="w-64 h-64 object-contain"
-            onError={(e) => {
-              // Fallback if the QR code is not a base64 image
-              e.currentTarget.style.display = 'none';
-              e.currentTarget.nextElementSibling?.removeAttribute('hidden');
-            }}
-          />
-          <div hidden className="w-64 h-64 bg-gray-100 flex items-center justify-center">
-            <p className="text-gray-500 text-center">QR Code Error</p>
-          </div>
+          <QRCode value={qrCodeData} size={256} />
         </div>
         
         {connectionState === 'expired' && (

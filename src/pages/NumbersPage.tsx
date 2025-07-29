@@ -209,11 +209,11 @@ const NumbersPage = () => {
                       <div className="text-sm text-gray-500">{number.phonenumber}</div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {number.webhookUrl ? (
+                      {number.webhook ? (
                         <div className="flex items-center text-sm text-gray-500">
-                          <span className="truncate max-w-[150px]">{number.webhookUrl}</span>
+                          <span className="truncate max-w-[150px]">{number.webhook}</span>
                           <a 
-                            href={number.webhookUrl} 
+                            href={number.webhook} 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="ml-1 text-gray-400 hover:text-gray-500"
@@ -292,6 +292,7 @@ const NumbersPage = () => {
         <AddNumberModal 
           isOpen={isAddModalOpen}
           onClose={() => setIsAddModalOpen(false)} 
+          isLoading={isLoading}
           onSubmit={async (data) => {
             try {
               const newNumber = await addNumber(data);
@@ -311,9 +312,10 @@ const NumbersPage = () => {
                 });
               }
             } catch (err: any) {
+              const message = err.response?.data?.message || (Array.isArray(err) ? err[0].error : 'Failed to add WhatsApp number');
               setToast({
                 show: true,
-                message: Array.isArray(err) ? err[0].error : 'Failed to add WhatsApp number',
+                message,
                 type: 'error',
               });
             }

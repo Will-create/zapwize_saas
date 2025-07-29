@@ -8,7 +8,7 @@ export type WhatsAppNumber = {
   id: string;
   name: string;
   phonenumber: string;
-  webhookUrl: string;
+  webhook: string;
   baseurl: string;
   status: NumberStatus;
   createdAt: string;
