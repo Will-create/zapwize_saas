@@ -40,9 +40,10 @@ export const useNumbers = () => {
       if (response) {
         setNumbers(response);
       }
-    } catch (err: any) {
-      console.error('Error loading numbers:', err);
-      setError(Array.isArray(err) ? err[0].error : 'Failed to load WhatsApp numbers');
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error loading numbers:', error);
+      setError(error.message || 'Failed to load WhatsApp numbers');
     } finally {
       setIsLoading(false);
     }
@@ -64,9 +65,10 @@ export const useNumbers = () => {
         setNumbers([...numbers, newNumber]);
         return newNumber;
       }
-    } catch (err: any) {
-      console.error('Error adding number:', err);
-      throw Array.isArray(err) ? err[0].error : 'Failed to add WhatsApp number';
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error adding number:', error);
+      throw new Error(error.message || 'Failed to add WhatsApp number');
     }
   };
 
@@ -83,9 +85,10 @@ export const useNumbers = () => {
           number.id === numberToUpdate.id ? response.value : number
         ));
       }
-    } catch (err: any) {
-      console.error('Error reconnecting number:', err);
-      throw Array.isArray(err) ? err[0].error : 'Failed to reconnect WhatsApp number';
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error reconnecting number:', error);
+      throw new Error(error.message || 'Failed to reconnect WhatsApp number');
     }
   };
 
@@ -97,9 +100,10 @@ export const useNumbers = () => {
       if (response.success) {
         setNumbers(numbers.filter(number => number.id !== id));
       }
-    } catch (err: any) {
-      console.error('Error removing number:', err);
-      throw Array.isArray(err) ? err[0].error : 'Failed to remove WhatsApp number';
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error removing number:', error);
+      throw new Error(error.message || 'Failed to remove WhatsApp number');
     }
   };
 
@@ -115,9 +119,10 @@ export const useNumbers = () => {
             : number
         ));
       }
-    } catch (err: any) {
-      console.error('Error logging out number:', err);
-      throw Array.isArray(err) ? err[0].error : 'Failed to logout WhatsApp number';
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error logging out number:', error);
+      throw new Error(error.message || 'Failed to logout WhatsApp number');
     }
   };
 
@@ -133,9 +138,67 @@ export const useNumbers = () => {
             : number
         ));
       }
-    } catch (err: any) {
-      console.error('Error stopping number:', err);
-      throw Array.isArray(err) ? err[0].error : 'Failed to stop WhatsApp number';
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error stopping number:', error);
+      throw new Error(error.message || 'Failed to stop WhatsApp number');
+    }
+  };
+
+  // Pause a number
+  const pauseNumber = async (id: string) => {
+    try {
+      setError(null);
+      const response = await numbersService.pause(id);
+      if (response.success) {
+        setNumbers(numbers.map(number => 
+          number.id === id 
+            ? { ...number, status: 'disconnected' as NumberStatus } 
+            : number
+        ));
+      }
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error pausing number:', error);
+      throw new Error(error.message || 'Failed to pause WhatsApp number');
+    }
+  };
+
+  // Resume a number
+  const resumeNumber = async (id: string) => {
+    try {
+      setError(null);
+      const response = await numbersService.resume(id);
+      if (response.success) {
+        setNumbers(numbers.map(number => 
+          number.id === id 
+            ? { ...number, status: 'connected' as NumberStatus } 
+            : number
+        ));
+      }
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error resuming number:', error);
+      throw new Error(error.message || 'Failed to resume WhatsApp number');
+    }
+  };
+
+  // Get a number's status
+  const statusNumber = async (id: string) => {
+    try {
+      setError(null);
+      const response = await numbersService.status(id);
+      if (response.success) {
+        setNumbers(numbers.map(number => 
+          number.id === id 
+            ? { ...number, status: response.value.status as NumberStatus } 
+            : number
+        ));
+      }
+    } catch (err) {
+      const error = err as Error;
+      console.error('Error getting number status:', error);
+      throw new Error(error.message || 'Failed to get WhatsApp number status');
     }
   };
 
@@ -148,5 +211,8 @@ export const useNumbers = () => {
     removeNumber,
     logoutNumber,
     stopNumber,
+    pauseNumber,
+    resumeNumber,
+    statusNumber,
   };
 };

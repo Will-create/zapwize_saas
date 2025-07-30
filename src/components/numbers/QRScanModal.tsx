@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { X, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
+import Button from '../ui/Button';
 
 export type ConnectionData = {
   phone: string;
@@ -187,14 +188,14 @@ const QRScanModal = ({
           <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center rounded-lg">
             <div className="text-center">
               <p className="text-gray-600 mb-2">QR code expired</p>
-              <button
+              <Button
                 onClick={refreshConnection}
-                disabled={isRefreshing}
+                isLoading={isRefreshing}
                 className="inline-flex items-center px-3 py-1.5 border border-transparent text-xs font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 disabled:opacity-50"
               >
-                <RefreshCw size={14} className={`mr-1 ${isRefreshing ? 'animate-spin' : ''}`} />
+                <RefreshCw size={14} className="mr-1" />
                 Refresh QR Code
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -323,33 +324,24 @@ const QRScanModal = ({
 
           <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6 sm:flex sm:flex-row-reverse">
             {(connectionState === 'expired' || connectionState === 'error') && !isQRCode && (
-              <button
+              <Button
                 type="button"
                 onClick={refreshConnection}
-                disabled={isRefreshing}
+                isLoading={isRefreshing}
                 className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50"
               >
-                {isRefreshing ? (
-                  <>
-                    <RefreshCw size={16} className="mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <RefreshCw size={16} className="mr-2" />
-                    Generate New Code
-                  </>
-                )}
-              </button>
+                <RefreshCw size={16} className="mr-2" />
+                Generate New Code
+              </Button>
             )}
             
-            <button
+            <Button
               type="button"
               onClick={onClose}
               className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
             >
               {connectionState === 'connected' ? 'Close' : 'Cancel'}
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -358,3 +350,4 @@ const QRScanModal = ({
 };
 
 export default QRScanModal;
+

@@ -1,6 +1,7 @@
 import { useState, FormEvent, useRef } from 'react';
 import { X, Upload, Download, AlertCircle } from 'lucide-react';
 import Papa from 'papaparse';
+import Button from '../ui/Button';
 
 type Template = {
   id: string;
@@ -28,7 +29,7 @@ type CreateCampaignModalProps = {
     templateId: string;
     schedule: Date | null;
     contacts: Contact[];
-  }) => void;
+  }) => Promise<void>;
   templates: Template[];
 };
 
@@ -37,6 +38,7 @@ const CreateCampaignModal = ({ isOpen, onClose, onSubmit, templates }: CreateCam
   const [templateId, setTemplateId] = useState('');
   const [schedule, setSchedule] = useState<string>('');
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
     templateId?: string;
@@ -127,16 +129,24 @@ const CreateCampaignModal = ({ isOpen, onClose, onSubmit, templates }: CreateCam
     window.URL.revokeObjectURL(url);
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit({
-        name: name.trim(),
-        templateId,
-        schedule: schedule ? new Date(schedule) : null,
-        contacts,
-      });
+      setIsLoading(true);
+      try {
+        await onSubmit({
+          name: name.trim(),
+          templateId,
+          schedule: schedule ? new Date(schedule) : null,
+          contacts,
+        });
+        onClose();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -237,22 +247,22 @@ const CreateCampaignModal = ({ isOpen, onClose, onSubmit, templates }: CreateCam
                       Upload Contacts
                     </label>
                     <div className="mt-1 flex items-center space-x-4">
-                      <button
+                      <Button
                         type="button"
                         onClick={() => fileInputRef.current?.click()}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                       >
                         <Upload size={16} className="mr-2" />
                         Upload CSV
-                      </button>
-                      <button
+                      </Button>
+                      <Button
                         type="button"
                         onClick={downloadSampleCSV}
                         className="inline-flex items-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                       >
                         <Download size={16} className="mr-2" />
                         Download Sample
-                      </button>
+                      </Button>
                       <input
                         ref={fileInputRef}
                         type="file"
@@ -305,19 +315,20 @@ const CreateCampaignModal = ({ isOpen, onClose, onSubmit, templates }: CreateCam
             </div>
 
             <div className="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
-              <button
+              <Button
                 type="submit"
+                isLoading={isLoading}
                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
               >
                 Create Campaign
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={onClose}
                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         </div>
@@ -325,5 +336,3 @@ const CreateCampaignModal = ({ isOpen, onClose, onSubmit, templates }: CreateCam
     </div>
   );
 };
-
-export default CreateCampaignModal;

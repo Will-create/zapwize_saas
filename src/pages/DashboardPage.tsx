@@ -12,7 +12,10 @@ import {
 } from 'chart.js';
 import { MessageSquare, Activity, ArrowUpRight, ArrowDownRight, Phone } from 'lucide-react';
 import { format } from 'date-fns';
-import { useNumbers } from '../hooks/useNumbers'
+import { useNumbers } from '../hooks/useNumbers';
+import { useAlertStore } from '../store/alertStore';
+import Button from '../components/ui/Button';
+
 // Register ChartJS components
 ChartJS.register(
   CategoryScale,
@@ -67,6 +70,7 @@ const DashboardPage = () => {
   const [selectedNumber, setSelectedNumber] = useState<string>('all');
   const { numbers } = useNumbers();
   const [numberData, setNumberData] = useState(numbers);
+  const { show: showAlert } = useAlertStore();
   
   // Update data when selected number changes
   useEffect(() => {
@@ -200,6 +204,16 @@ const DashboardPage = () => {
           <div className="h-[300px]">
             <Line data={requestChartData} options={chartOptions} />
           </div>
+        </div>
+      </div>
+
+      {/* Trigger Alert Banner */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Global Alert Banner</h3>
+        <div className="flex space-x-4">
+          <Button onClick={() => showAlert('Your email is not verified', 'warning', { label: 'Verify Now', onPress: () => console.log('Verify Now clicked') })}>Show Warning</Button>
+          <Button onClick={() => showAlert('Your payment was successful', 'success', undefined, 5)}>Show Success with Timer</Button>
+          <Button onClick={() => showAlert('There was an error processing your request', 'error')}>Show Error</Button>
         </div>
       </div>
     </div>

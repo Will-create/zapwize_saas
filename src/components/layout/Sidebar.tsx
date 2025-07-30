@@ -23,11 +23,11 @@ const navItems = {
     { path: '/dashboard/numbers', icon: <Smartphone size={20} />, label: 'Numbers' },
     { path: '/dashboard/ai-bot', icon: <Bot size={20} />, label: 'AI Bot' },
   ],
-  comingSoon: [
-    { path: '/dashboard/chats', icon: <MessageCircle size={20} />, label: 'Chats' },
-    { path: '/dashboard/campaigns', icon: <Puzzle size={20} />, label: 'Campaigns' },
-    { path: '/dashboard/templates', icon: <MessageSquare size={20} />, label: 'Templates' },
-  ],
+  // comingSoon: [
+  //   { path: '/dashboard/chats', icon: <MessageCircle size={20} />, label: 'Chats' },
+  //   { path: '/dashboard/campaigns', icon: <Puzzle size={20} />, label: 'Campaigns' },
+  //   { path: '/dashboard/templates', icon: <MessageSquare size={20} />, label: 'Templates' },
+  // ],
   settings: [
     { path: '/dashboard/api-keys', icon: <Key size={20} />, label: 'API Keys' },
     { path: '/dashboard/documentation', icon: <FileText size={20} />, label: 'Documentation' },
@@ -59,6 +59,7 @@ const Sidebar = () => {
           bg-white shadow-md z-10
           lg:block lg:w-64 lg:relative
           fixed inset-y-0 left-0 w-64 transition-transform duration-300 ease-in-out
+          flex flex-col
           ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
         `}
       >
@@ -73,7 +74,7 @@ const Sidebar = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="mt-6 px-2">
+        <nav className="flex-1 mt-6 px-2 overflow-y-auto">
           {/* Landing Page Link */}
           <div className="mb-6">
             <NavLink
@@ -113,7 +114,7 @@ const Sidebar = () => {
           </div>
 
           {/* Coming Soon Section */}
-          <div className="mb-6">
+          {/* <div className="mb-6">
             <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
               Coming Soon
             </h3>
@@ -136,7 +137,7 @@ const Sidebar = () => {
                 </li>
               ))}
             </ul>
-          </div>
+          </div> */}
 
           {/* Settings Section */}
           <div>
@@ -166,7 +167,7 @@ const Sidebar = () => {
         </nav>
 
         {/* Footer */}
-        <div className="absolute bottom-0 w-full p-4 border-t border-gray-100">
+        <div className="p-4 border-t border-gray-100">
           <div className="text-xs text-gray-500">
             <p>&copy; 2025 Zapwize</p>
             <p>Version 1.0.0</p>

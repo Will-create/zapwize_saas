@@ -4,6 +4,7 @@ import { useApiKeys } from '../hooks/useApiKeys';
 import CreateApiKeyModal from '../components/apiKeys/CreateApiKeyModal';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
 import Toast from '../components/ui/Toast';
+import Button from '../components/ui/Button';
 
 const ApiKeysPage = () => {
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
@@ -44,14 +45,23 @@ const ApiKeysPage = () => {
     setIsConfirmModalOpen(true);
   };
 
-  const confirmRevoke = () => {
+  const confirmRevoke = async () => {
     if (selectedKeyId) {
-      revokeApiKey(selectedKeyId);
-      setToast({
-        show: true,
-        message: 'API Key revoked successfully',
-        type: 'success',
-      });
+        try {
+            await revokeApiKey(selectedKeyId);
+            setToast({
+                show: true,
+                message: 'API Key revoked successfully',
+                type: 'success',
+            });
+        } catch (error) {
+            const err = error as Error;
+            setToast({
+                show: true,
+                message: err.message || 'Failed to revoke API Key',
+                type: 'error',
+            });
+        }
       
       setTimeout(() => {
         setToast(prev => ({ ...prev, show: false }));
@@ -82,13 +92,13 @@ const ApiKeysPage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button
+        <Button
           onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
         >
           <Plus size={16} className="mr-2" />
           Create New API Key
-        </button>
+        </Button>
       </div>
 
       {/* API Keys list */}
@@ -97,12 +107,12 @@ const ApiKeysPage = () => {
           {searchQuery ? (
             <div>
               <p className="text-gray-500 mb-2">No results found for "{searchQuery}"</p>
-              <button 
+              <Button 
                 onClick={() => setSearchQuery('')}
                 className="text-green-600 hover:text-green-700 text-sm font-medium"
               >
                 Clear search
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="py-12">
@@ -113,13 +123,13 @@ const ApiKeysPage = () => {
               <p className="text-gray-500 mb-6 max-w-md mx-auto">
                 Create an API key to authenticate your applications and access the Zapwize API.
               </p>
-              <button
+              <Button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
                 <Plus size={16} className="mr-2" />
                 Create New API Key
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -178,23 +188,23 @@ const ApiKeysPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm text-gray-900 font-mono bg-gray-100 p-1 rounded flex items-center">
                         <span className="truncate w-24">{apiKey.key}</span>
-                        <button 
+                        <Button 
                           onClick={() => handleCopyToClipboard(apiKey.key)}
                           className="ml-2 text-gray-500 hover:text-gray-700"
                           title="Copy API Key"
                         >
                           <Copy size={14} />
-                        </button>
+                        </Button>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
+                      <Button 
                         onClick={() => handleRevokeClick(apiKey.id)}
                         className="text-red-600 hover:text-red-900 flex items-center justify-end"
                       >
                         <Trash2 size={16} className="mr-1" />
                         Revoke
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -209,8 +219,8 @@ const ApiKeysPage = () => {
         <CreateApiKeyModal 
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onSubmit={(data) => {
-            const newKey = createApiKey(data);
+          onSubmit={async (data) => {
+            const newKey = await createApiKey(data);
             setToast({
               show: true,
               message: 'API Key created successfully',

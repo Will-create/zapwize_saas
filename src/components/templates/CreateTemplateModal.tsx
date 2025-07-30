@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { X, Image, Video, Mic, File } from 'lucide-react';
 import { v4 as uuidv4 } from 'uuid';
 import WhatsAppPreview from './WhatsAppPreview';
+import Button from '../ui/Button';
 
 type MediaType = 'image' | 'video' | 'audio' | 'document';
 
@@ -22,7 +23,7 @@ type CreateTemplateModalProps = {
     variables: string[];
     category: 'marketing' | 'support' | 'notifications';
     media: MediaContent[];
-  }) => void;
+  }) => Promise<void>;
 };
 
 const CreateTemplateModal = ({ isOpen, onClose, onSubmit }: CreateTemplateModalProps) => {
@@ -32,6 +33,7 @@ const CreateTemplateModal = ({ isOpen, onClose, onSubmit }: CreateTemplateModalP
   const [media, setMedia] = useState<MediaContent[]>([]);
   const [mediaUrl, setMediaUrl] = useState('');
   const [mediaCaption, setMediaCaption] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
     content?: string;
@@ -87,24 +89,32 @@ const CreateTemplateModal = ({ isOpen, onClose, onSubmit }: CreateTemplateModalP
     setMedia(media.filter(m => m.id !== id));
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     
     if (validateForm()) {
-      onSubmit({
-        name: name.trim(),
-        content: content.trim(),
-        variables: extractVariables(content),
-        category,
-        media,
-      });
-      
-      // Reset form
-      setName('');
-      setContent('');
-      setCategory('support');
-      setMedia([]);
-      setErrors({});
+      setIsLoading(true);
+      try {
+        await onSubmit({
+          name: name.trim(),
+          content: content.trim(),
+          variables: extractVariables(content),
+          category,
+          media,
+        });
+        
+        // Reset form
+        setName('');
+        setContent('');
+        setCategory('support');
+        setMedia([]);
+        setErrors({});
+        onClose();
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -201,38 +211,38 @@ const CreateTemplateModal = ({ isOpen, onClose, onSubmit }: CreateTemplateModalP
                         />
                       </div>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
-                        <button
+                        <Button
                           type="button"
                           onClick={() => handleAddMedia('image')}
                           className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors"
                         >
                           <Image size={24} className="text-gray-400 mb-2" />
                           <span className="text-xs text-gray-600">Add Image</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           onClick={() => handleAddMedia('video')}
                           className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors"
                         >
                           <Video size={24} className="text-gray-400 mb-2" />
                           <span className="text-xs text-gray-600">Add Video</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           onClick={() => handleAddMedia('audio')}
                           className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors"
                         >
                           <Mic size={24} className="text-gray-400 mb-2" />
                           <span className="text-xs text-gray-600">Add Audio</span>
-                        </button>
-                        <button
+                        </Button>
+                        <Button
                           type="button"
                           onClick={() => handleAddMedia('document')}
                           className="flex flex-col items-center justify-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-500 transition-colors"
                         >
                           <File size={24} className="text-gray-400 mb-2" />
                           <span className="text-xs text-gray-600">Add Document</span>
-                        </button>
+                        </Button>
                       </div>
                     </div>
 
@@ -255,13 +265,13 @@ const CreateTemplateModal = ({ isOpen, onClose, onSubmit }: CreateTemplateModalP
                                 <p className="text-sm text-gray-500 truncate">{item.caption}</p>
                               )}
                             </div>
-                            <button
+                            <Button
                               type="button"
                               onClick={() => handleRemoveMedia(item.id)}
                               className="ml-2 text-gray-400 hover:text-gray-500"
                             >
                               <X size={16} />
-                            </button>
+                            </Button>
                           </div>
                         ))}
                       </div>
@@ -310,20 +320,21 @@ const CreateTemplateModal = ({ isOpen, onClose, onSubmit }: CreateTemplateModalP
           </div>
 
           <div className="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
-            <button
+            <Button
               type="submit"
               onClick={handleSubmit}
+              isLoading={isLoading}
               className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
             >
               Create Template
-            </button>
-            <button
+            </Button>
+            <Button
               type="button"
               onClick={onClose}
               className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
             >
               Cancel
-            </button>
+            </Button>
           </div>
         </div>
       </div>

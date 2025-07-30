@@ -1,14 +1,16 @@
 import { useState, FormEvent } from 'react';
 import { X, Bot, ArrowRight, ArrowLeft } from 'lucide-react';
+import Button from '../ui/Button';
 
 type CreateBotModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: any) => void;
+  onSubmit: (data: any) => Promise<void>;
 };
 
 const CreateBotModal = ({ isOpen, onClose, onSubmit }: CreateBotModalProps) => {
   const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     whatsappNumber: '',
@@ -18,9 +20,18 @@ const CreateBotModal = ({ isOpen, onClose, onSubmit }: CreateBotModalProps) => {
     introMessage: '',
   });
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    onSubmit(formData);
+    setIsLoading(true);
+    try {
+      await onSubmit(formData);
+      onClose();
+    } catch (error) {
+      // Handle error appropriately
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   if (!isOpen) return null;
@@ -203,41 +214,42 @@ const CreateBotModal = ({ isOpen, onClose, onSubmit }: CreateBotModalProps) => {
             <div className="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
               {step < 3 ? (
                 <>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => setStep(step + 1)}
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Next
                     <ArrowRight size={16} className="ml-2" />
-                  </button>
+                  </Button>
                   {step > 1 && (
-                    <button
+                    <Button
                       type="button"
                       onClick={() => setStep(step - 1)}
                       className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
                     >
                       <ArrowLeft size={16} className="mr-2" />
                       Back
-                    </button>
+                    </Button>
                   )}
                 </>
               ) : (
                 <>
-                  <button
+                  <Button
                     type="submit"
+                    isLoading={isLoading}
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
                   >
                     Create Bot
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => setStep(step - 1)}
                     className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
                   >
                     <ArrowLeft size={16} className="mr-2" />
                     Back
-                  </button>
+                  </Button>
                 </>
               )}
             </div>

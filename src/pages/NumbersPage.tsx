@@ -1,32 +1,28 @@
 import { useState } from 'react';
-import { Plus, Search, QrCode, RefreshCw, Edit, Trash2, ExternalLink as External, Power, PowerOff } from 'lucide-react';
+import { Plus, Search, Edit, ExternalLink as External } from 'lucide-react';
 import AddNumberModal from '../components/numbers/AddNumberModal';
 import QRScanModal, { ConnectionData } from '../components/numbers/QRScanModal';
-import { useNumbers } from '../hooks/useNumbers';
+import { useNumbers, WhatsAppNumber } from '../hooks/useNumbers';
 import Badge from '../components/ui/Badge';
-import Toast from '../components/ui/Toast';
 import ConfirmationModal from '../components/ui/ConfirmationModal';
+import { useAlertStore } from '../store/alertStore';
+import NumberDetailsPanel from '../components/numbers/NumberDetailsPanel'; // New import
+
 
 const NumbersPage = () => {
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [selectedNumber, setSelectedNumber] = useState<WhatsAppNumber | null>(null);
   const [isQRModalOpen, setIsQRModalOpen] = useState(false);
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [isAddingNumber, setIsAddingNumber] = useState(false);
+  const [isActionLoading, setIsActionLoading] = useState(false);
   const [confirmAction, setConfirmAction] = useState<{
     type: 'remove' | 'stop' | 'logout';
     id: string;
   } | null>(null);
   const [connectionData, setConnectionData] = useState<ConnectionData | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({
-    show: false,
-    message: '',
-    type: 'success',
-  });
+  const { show: showAlert } = useAlertStore();
   
   const { 
     numbers, 
@@ -60,40 +56,28 @@ const NumbersPage = () => {
   const handleAction = async () => {
     if (!confirmAction) return;
 
+    setIsActionLoading(true); // Set loading true when action starts
     try {
       switch (confirmAction.type) {
         case 'remove':
           await removeNumber(confirmAction.id);
-          setToast({
-            show: true,
-            message: 'WhatsApp number removed successfully',
-            type: 'success',
-          });
+          showAlert('WhatsApp number removed successfully', 'success', undefined, 5);
+          setSelectedNumber(null); // Close panel after removal
           break;
         case 'stop':
           await stopNumber(confirmAction.id);
-          setToast({
-            show: true,
-            message: 'WhatsApp number stopped successfully',
-            type: 'success',
-          });
+          showAlert('WhatsApp number stopped successfully', 'success', undefined, 5);
           break;
         case 'logout':
           await logoutNumber(confirmAction.id);
-          setToast({
-            show: true,
-            message: 'WhatsApp number logged out successfully',
-            type: 'success',
-          });
+          showAlert('WhatsApp number logged out successfully', 'success', undefined, 5);
           break;
       }
-    } catch (err: any) {
-      setToast({
-        show: true,
-        message: Array.isArray(err) ? err[0].error : 'Operation failed',
-        type: 'error',
-      });
+    } catch (err) {
+      const error = err as Error;
+      showAlert(error.message || 'Operation failed', 'error');
     } finally {
+      setIsActionLoading(false); // Set loading false when action ends
       setConfirmAction(null);
       setIsConfirmModalOpen(false);
     }
@@ -202,7 +186,11 @@ const NumbersPage = () => {
               </thead>
               <tbody className="bg-white divide-y divide-gray-200">
                 {filteredNumbers.map((number) => (
-                  <tr key={number.id} className="hover:bg-gray-50">
+                  <tr 
+                    key={number.id} 
+                    className="hover:bg-gray-50 cursor-pointer"
+                    onClick={() => setSelectedNumber(number)}
+                  >
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm font-medium text-gray-900">{number.name}</div>
                     </td>
@@ -218,6 +206,7 @@ const NumbersPage = () => {
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="ml-1 text-gray-400 hover:text-gray-500"
+                            onClick={(e) => e.stopPropagation()} // Prevent row click
                           >
                             <External size={14} />
                           </a>
@@ -229,57 +218,8 @@ const NumbersPage = () => {
                     <td className="px-6 py-4 whitespace-nowrap">
                       <Badge status={number.status} />
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <div className="flex items-center justify-end space-x-2">
-                        <button 
-                          onClick={() => {/* Open edit modal */}}
-                          className="text-gray-600 hover:text-gray-900"
-                          title="Edit"
-                        >
-                          <Edit size={16} />
-                        </button>
-                        {number.status === 'connected' ? (
-                          <button 
-                            onClick={() => {
-                              setConfirmAction({ type: 'logout', id: number.id });
-                              setIsConfirmModalOpen(true);
-                            }}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="Logout"
-                          >
-                            <Power size={16} />
-                          </button>
-                        ) : (
-                          <button 
-                            onClick={() => handleReconnect(number.id)}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="Reconnect"
-                          >
-                            <RefreshCw size={16} />
-                          </button>
-                        )}
-                        <button 
-                          onClick={() => {
-                            setConfirmAction({ type: 'stop', id: number.id });
-                            setIsConfirmModalOpen(true);
-                          }}
-                          className="text-yellow-600 hover:text-yellow-900"
-                          title="Stop"
-                        >
-                          <PowerOff size={16} />
-                        </button>
-                        <button 
-                          onClick={() => {
-                            setConfirmAction({ type: 'remove', id: number.id });
-                            setIsConfirmModalOpen(true);
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                          title="Remove"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
+                    {/* The entire row is now clickable to open the panel */}
+                      {/* No individual action buttons here */}
                   </tr>
                 ))}
               </tbody>
@@ -307,19 +247,12 @@ const NumbersPage = () => {
                 });
                 setIsAddModalOpen(false);
                 setIsQRModalOpen(true);
-                setToast({
-                  show: true,
-                  message: 'WhatsApp number added successfully',
-                  type: 'success',
-                });
+                showAlert('WhatsApp number added successfully', 'success', undefined, 5);
               }
-            } catch (err: any) {
-              const message = err.response?.data?.message || (Array.isArray(err) ? err[0].error : 'Failed to add WhatsApp number');
-              setToast({
-                show: true,
-                message,
-                type: 'error',
-              });
+            } catch (err) {
+              const error = err as Error;
+              const message = error.message || 'Failed to add WhatsApp number';
+              showAlert(message, 'error');
               throw err; // Re-throw the error to be caught by the modal
             } finally {
               setIsAddingNumber(false);
@@ -340,22 +273,29 @@ const NumbersPage = () => {
           onSuccess={async () => {
             try {
               await reconnectNumber(connectionData.phone);
-              setToast({
-                show: true,
-                message: 'WhatsApp number connected successfully',
-                type: 'success',
-              });
-            } catch (err: any) {
-              setToast({
-                show: true,
-                message: Array.isArray(err) ? err[0].error : 'Failed to connect WhatsApp number',
-                type: 'error',
-              });
+              showAlert('WhatsApp number connected successfully', 'success', undefined, 5);
+            } catch (err) {
+              const error = err as Error;
+              showAlert(error.message || 'Failed to connect WhatsApp number', 'error');
             } finally {
               setIsQRModalOpen(false);
               setConnectionData(null);
             }
           }}
+        />
+      )}
+
+      {/* Number Details Side Panel */}
+      {selectedNumber && (
+        <NumberDetailsPanel
+          number={selectedNumber}
+          onClose={() => setSelectedNumber(null)}
+          onConfirmAction={(type, id) => {
+            setConfirmAction({ type, id });
+            setIsConfirmModalOpen(true);
+          }}
+          onReconnect={handleReconnect}
+          isActionLoading={isActionLoading}
         />
       )}
 
@@ -391,14 +331,6 @@ const NumbersPage = () => {
           }
         />
       )}
-
-      {/* Toast Notification */}
-      <Toast
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
     </div>
   );
 };

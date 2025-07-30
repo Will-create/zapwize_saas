@@ -1,6 +1,7 @@
 import { useState, FormEvent } from 'react';
 import { X } from 'lucide-react';
 import { useNumbers } from '../../hooks/useNumbers';
+import Button from '../ui/Button';
 
 type CreateApiKeyData = {
   name: string;
@@ -11,17 +12,19 @@ type CreateApiKeyData = {
 type CreateApiKeyModalProps = {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (data: CreateApiKeyData) => void;
+  onSubmit: (data: CreateApiKeyData) => Promise<void>;
 };
 
 const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps) => {
   const [name, setName] = useState('');
   const [numberId, setNumberId] = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
   const [errors, setErrors] = useState<{
     name?: string;
     numberId?: string;
     permissions?: string;
+    general?: string;
   }>({});
 
   const { numbers } = useNumbers();
@@ -61,21 +64,32 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
     return isValid;
   };
 
-  const handleSubmit = (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    if (validateForm()) {
-      onSubmit({
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+    setErrors({});
+
+    try {
+      await onSubmit({
         name: name.trim(),
         numberId,
         permissions,
       });
       
-      // Reset form
+      // Reset form on success
       setName('');
       setNumberId('');
       setPermissions([]);
       setErrors({});
+    } catch (error) {
+        const err = error as Error;
+      setErrors({ general: err.message || 'An unexpected error occurred.' });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -112,6 +126,11 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
 
           <form onSubmit={handleSubmit}>
             <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+             {errors.general && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
+                    <p className="text-sm text-red-600">{errors.general}</p>
+                </div>
+            )}
               <div className="space-y-4">
                 {/* Name field */}
                 <div>
@@ -158,7 +177,7 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
                         <option value="">Select a WhatsApp number</option>
                         {numbers.map((number) => (
                           <option key={number.id} value={number.id}>
-                            {number.name} ({number.phoneNumber})
+                            {number.name} ({number.phonenumber})
                           </option>
                         ))}
                       </select>
@@ -204,20 +223,21 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
             </div>
 
             <div className="px-4 py-3 bg-gray-50 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
-              <button
+              <Button
                 type="submit"
                 className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
+                isLoading={isLoading}
                 disabled={numbers.length === 0}
               >
                 Create API Key
-              </button>
-              <button
+              </Button>
+              <Button
                 type="button"
                 onClick={onClose}
                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
               >
                 Cancel
-              </button>
+              </Button>
             </div>
           </form>
         </div>

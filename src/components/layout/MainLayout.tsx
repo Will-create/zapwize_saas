@@ -3,6 +3,7 @@ import { useEffect } from 'react';
 import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { useAuth } from '../../context/AuthContext';
+import GlobalAlertBanner from '../ui/GlobalAlertBanner';
 
 const MainLayout = () => {
   const { isAuthenticated, isLoading } = useAuth();
@@ -25,6 +26,7 @@ const MainLayout = () => {
 
   return (
     <div className="flex h-screen bg-gray-50">
+      <GlobalAlertBanner />
       {/* Sidebar */}
       <Sidebar />
       

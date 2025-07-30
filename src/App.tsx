@@ -18,9 +18,9 @@ const ChangePassword = lazy(() => import('./pages/auth/ChangePassword' /* webpac
 
 const MainLayout = lazy(() => import('./components/layout/MainLayout' /* webpackChunkName: "layout" */));
 const DashboardPage = lazy(() => import('./pages/DashboardPage' /* webpackChunkName: "dashboard" */));
-const ChatsPage = lazy(() => import('./pages/ChatsPage' /* webpackChunkName: "chats" */));
+// const ChatsPage = lazy(() => import('./pages/ChatsPage' /* webpackChunkName: "chats" */));
 const NumbersPage = lazy(() => import('./pages/NumbersPage' /* webpackChunkName: "numbers" */));
-const CampaignsPage = lazy(() => import('./pages/CampaignsPage' /* webpackChunkName: "campaigns" */));
+// const CampaignsPage = lazy(() => import('./pages/CampaignsPage' /* webpackChunkName: "campaigns" */));
 const ApiKeysPage = lazy(() => import('./pages/ApiKeysPage' /* webpackChunkName: "api-keys" */));
 const DocumentationPage = lazy(() => import('./pages/DocumentationPage' /* webpackChunkName: "docs" */));
 const BillingPage = lazy(() => import('./pages/BillingPage' /* webpackChunkName: "billing" */));
@@ -28,7 +28,7 @@ const SettingsPage = lazy(() => import('./pages/SettingsPage' /* webpackChunkNam
 const ProfilePage = lazy(() => import('./pages/ProfilePage' /* webpackChunkName: "profile" */));
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage' /* webpackChunkName: "notifications" */));
 const PaymentPage = lazy(() => import('./pages/PaymentPage' /* webpackChunkName: "payment" */));
-const TemplatesPage = lazy(() => import('./pages/TemplatesPage' /* webpackChunkName: "templates" */));
+// const TemplatesPage = lazy(() => import('./pages/TemplatesPage' /* webpackChunkName: "templates" */));
 const UsersPage = lazy(() => import('./pages/UsersPage' /* webpackChunkName: "users" */));
 const AIBotPage = lazy(() => import('./pages/AIBotPage' /* webpackChunkName: "ai-bot" */));
 
@@ -58,10 +58,10 @@ function App() {
               }
             >
               <Route index element={<DashboardPage />} />
-              <Route path="chats" element={<ChatsPage />} />
+              {/* <Route path="chats" element={<ChatsPage />} /> */}
               <Route path="numbers" element={<NumbersPage />} />
-              <Route path="campaigns" element={<CampaignsPage />} />
-              <Route path="templates" element={<TemplatesPage />} />
+              {/* <Route path="campaigns" element={<CampaignsPage />} /> */}
+              {/* <Route path="templates" element={<TemplatesPage />} /> */}
               <Route path="ai-bot" element={<AIBotPage />} />
               <Route path="api-keys" element={<ApiKeysPage />} />
               <Route path="documentation" element={<DocumentationPage />} />

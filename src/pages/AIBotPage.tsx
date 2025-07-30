@@ -1,88 +1,16 @@
 import { useState } from 'react';
 import { Bot, Plus, Search, Power, PowerOff } from 'lucide-react';
+import { useBots, Bot as BotType } from '../hooks/useBots';
 import CreateBotModal from '../components/bots/CreateBotModal';
 import BotDetailsPanel from '../components/bots/BotDetailsPanel';
 import Toast from '../components/ui/Toast';
-
-type Bot = {
-  id: string;
-  name: string;
-  status: 'active' | 'inactive' | 'draft';
-  whatsappNumber: string;
-  createdAt: string;
-  messageCount: number;
-  successRate: number;
-  documents: Array<{
-    id: string;
-    name: string;
-    type: string;
-    size: number;
-  }>;
-  tokenUsage: {
-    total: number;
-    remaining: number;
-    resetDate: string;
-  };
-};
-
-const mockBots: Bot[] = [
-  {
-    id: 'bot_1',
-    name: 'Customer Support Bot',
-    status: 'active',
-    whatsappNumber: '+1234567890',
-    createdAt: '2025-02-20T10:00:00Z',
-    messageCount: 1250,
-    successRate: 95.5,
-    documents: [
-      {
-        id: 'doc_1',
-        name: 'Product Manual.pdf',
-        type: 'pdf',
-        size: 2500000,
-      },
-      {
-        id: 'doc_2',
-        name: 'FAQs.txt',
-        type: 'text',
-        size: 15000,
-      },
-    ],
-    tokenUsage: {
-      total: 1000000,
-      remaining: 750000,
-      resetDate: '2025-03-20T00:00:00Z',
-    },
-  },
-  {
-    id: 'bot_2',
-    name: 'Sales Assistant',
-    status: 'inactive',
-    whatsappNumber: '+9876543210',
-    createdAt: '2025-02-15T15:30:00Z',
-    messageCount: 850,
-    successRate: 88.2,
-    documents: [
-      {
-        id: 'doc_3',
-        name: 'Price List.xlsx',
-        type: 'spreadsheet',
-        size: 500000,
-      },
-    ],
-    tokenUsage: {
-      total: 500000,
-      remaining: 200000,
-      resetDate: '2025-03-15T00:00:00Z',
-    },
-  },
-];
+import Button from '../components/ui/Button';
 
 const AIBotPage = () => {
-  const [bots, setBots] = useState<Bot[]>(mockBots);
+  const { bots, createBot, toggleBotStatus, deleteBot } = useBots();
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedBot, setSelectedBot] = useState<Bot | null>(null);
+  const [selectedBot, setSelectedBot] = useState<BotType | null>(null);
   const [toast, setToast] = useState<{
     show: boolean;
     message: string;
@@ -98,30 +26,45 @@ const AIBotPage = () => {
     bot.whatsappNumber.includes(searchQuery)
   );
 
-  const handleStatusToggle = (botId: string) => {
-    setBots(bots.map(bot => 
-      bot.id === botId
-        ? { ...bot, status: bot.status === 'active' ? 'inactive' : 'active' }
-        : bot
-    ));
-    
-    setToast({
-      show: true,
-      message: `Bot ${bots.find(b => b.id === botId)?.status === 'active' ? 'deactivated' : 'activated'} successfully`,
-      type: 'success',
-    });
+  const handleStatusToggle = async (botId: string) => {
+    const originalStatus = bots.find(b => b.id === botId)?.status;
+    try {
+        await toggleBotStatus(botId);
+        setToast({
+            show: true,
+            message: `Bot ${originalStatus === 'active' ? 'deactivated' : 'activated'} successfully`,
+            type: 'success',
+        });
+    } catch (error) {
+        const err = error as Error;
+        setToast({
+            show: true,
+            message: err.message || 'Failed to toggle bot status',
+            type: 'error',
+        });
+    }
   };
 
-  const handleDeleteBot = (botId: string) => {
-    setBots(bots.filter(bot => bot.id !== botId));
-    setToast({
-      show: true,
-      message: 'Bot deleted successfully',
-      type: 'success',
-    });
+  const handleDeleteBot = async (botId: string) => {
+    try {
+        await deleteBot(botId);
+        setToast({
+            show: true,
+            message: 'Bot deleted successfully',
+            type: 'success',
+        });
+        setSelectedBot(null);
+    } catch (error) {
+        const err = error as Error;
+        setToast({
+            show: true,
+            message: err.message || 'Failed to delete bot',
+            type: 'error',
+        });
+    }
   };
 
-  const getStatusColor = (status: Bot['status']) => {
+  const getStatusColor = (status: BotType['status']) => {
     switch (status) {
       case 'active':
         return 'bg-green-100 text-green-800';
@@ -155,13 +98,13 @@ const AIBotPage = () => {
             onChange={(e) => setSearchQuery(e.target.value)}
           />
         </div>
-        <button
+        <Button
           onClick={() => setIsCreateModalOpen(true)}
           className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
         >
           <Plus size={16} className="mr-2" />
           Create New Bot
-        </button>
+        </Button>
       </div>
 
       {/* Bots list */}
@@ -170,12 +113,12 @@ const AIBotPage = () => {
           {searchQuery ? (
             <div>
               <p className="text-gray-500 mb-2">No bots found matching "{searchQuery}"</p>
-              <button 
+              <Button 
                 onClick={() => setSearchQuery('')}
                 className="text-green-600 hover:text-green-700 text-sm font-medium"
               >
                 Clear search
-              </button>
+              </Button>
             </div>
           ) : (
             <div className="py-12">
@@ -186,13 +129,13 @@ const AIBotPage = () => {
               <p className="text-gray-500 mb-6 max-w-md mx-auto">
                 Create your first AI bot to automate customer interactions on WhatsApp.
               </p>
-              <button
+              <Button
                 onClick={() => setIsCreateModalOpen(true)}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
                 <Plus size={16} className="mr-2" />
                 Create First Bot
-              </button>
+              </Button>
             </div>
           )}
         </div>
@@ -255,7 +198,7 @@ const AIBotPage = () => {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                      <button 
+                      <Button 
                         onClick={(e) => {
                           e.stopPropagation();
                           handleStatusToggle(bot.id);
@@ -268,7 +211,7 @@ const AIBotPage = () => {
                         title={bot.status === 'active' ? 'Deactivate' : 'Activate'}
                       >
                         {bot.status === 'active' ? <Power size={16} /> : <PowerOff size={16} />}
-                      </button>
+                      </Button>
                     </td>
                   </tr>
                 ))}
@@ -283,9 +226,8 @@ const AIBotPage = () => {
         <CreateBotModal
           isOpen={isCreateModalOpen}
           onClose={() => setIsCreateModalOpen(false)}
-          onSubmit={(data) => {
-            // Handle bot creation
-            setIsCreateModalOpen(false);
+          onSubmit={async (data) => {
+            await createBot(data);
             setToast({
               show: true,
               message: 'Bot created successfully',

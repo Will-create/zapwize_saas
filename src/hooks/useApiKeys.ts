@@ -65,29 +65,42 @@ export const useApiKeys = () => {
   }, [apiKeys]);
 
   // Create a new API key
-  const createApiKey = (data: CreateApiKeyData) => {
-    // Get the linked number name instead of ID
-    const numbersData = localStorage.getItem('zapwize_numbers');
-    const numbers = numbersData ? JSON.parse(numbersData) : [];
-    
-    const linkedNumber = numbers.find((n: any) => n.id === data.numberId);
-    
-    const newKey: ApiKey = {
-      id: `key_${Math.random().toString(36).substr(2, 9)}`,
-      name: data.name,
-      key: generateApiKey(),
-      linkedNumber: linkedNumber ? linkedNumber.name : 'Unknown Number',
-      permissions: data.permissions,
-      createdAt: new Date().toISOString(),
-    };
-    
-    setApiKeys([...apiKeys, newKey]);
-    return newKey;
+  const createApiKey = (data: CreateApiKeyData): Promise<ApiKey> => {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        // Get the linked number name instead of ID
+        const numbersData = localStorage.getItem('zapwize_numbers');
+        const numbers = numbersData ? JSON.parse(numbersData) : [];
+        
+        const linkedNumber = numbers.find((n: any) => n.id === data.numberId);
+        
+        if (!linkedNumber) {
+          return reject(new Error('The selected WhatsApp number could not be found.'));
+        }
+
+        const newKey: ApiKey = {
+          id: `key_${Math.random().toString(36).substr(2, 9)}`,
+          name: data.name,
+          key: generateApiKey(),
+          linkedNumber: linkedNumber.name,
+          permissions: data.permissions,
+          createdAt: new Date().toISOString(),
+        };
+        
+        setApiKeys(prevKeys => [...prevKeys, newKey]);
+        resolve(newKey);
+      }, 1000); // Simulate network delay
+    });
   };
 
   // Revoke an API key
-  const revokeApiKey = (id: string) => {
-    setApiKeys(apiKeys.filter(key => key.id !== id));
+  const revokeApiKey = (id: string): Promise<void> => {
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        setApiKeys(prevKeys => prevKeys.filter(key => key.id !== id));
+        resolve();
+      }, 500); // Simulate network delay
+    });
   };
 
   return {
