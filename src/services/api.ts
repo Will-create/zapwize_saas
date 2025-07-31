@@ -183,4 +183,132 @@ export const numbersService = {
   }
 };
 
+// Fetch dashboard data for a specific number
+// Expected response structure:
+// {
+//   "success": true,
+//   "value": {
+//     "calls": [
+//       {
+//         "id": "string",
+//         "duration": "number",
+//         "timestamp": "string"
+//       }
+//     ],
+//     "messages": [
+//       {
+//         "id": "string",
+//         "content": "string",
+//         "timestamp": "string"
+//       }
+//     ],
+//     "statistics": {
+//       "totalCalls": "number",
+//       "totalMessages": "number"
+//     }
+//   }
+// }
+export const fetchDashboardData = async (numberId: string) => {
+  try {
+    const response = await makeApiRequest('dashboard_data/' + numberId);
+    return response;
+  } catch (error) {
+    console.error('Error fetching dashboard data:', error);
+    throw error;
+  }
+};
+
+export const notificationsService = {
+  fetchNotifications: async (filter: 'all' | 'unread' = 'all') => {
+    try {
+      const response = await makeApiRequest('notifications_list', { filter });
+      console.log('Fetched notifications:', response);
+      return response;
+    } catch (error) {
+      console.error('Error fetching notifications:', error);
+      throw error;
+    }
+  },
+
+  markAsRead: async (id: string) => {
+    try {
+      const response = await makeApiRequest('notifications_mark_read', { id });
+      return response.success;
+    } catch (error) {
+      console.error('Error marking notification as read:', error);
+      throw error;
+    }
+  },
+
+  markAllAsRead: async () => {
+    try {
+      const response = await makeApiRequest('notifications_all_read');
+      return response.success;
+    } catch (error) {
+      console.error('Error marking all notifications as read:', error);
+      throw error;
+    }
+  },
+};
+
+export const billingService = {
+  getCurrentPlan: async () => {
+    // Backend: Return the current plan details
+    // {
+    //   success: boolean,
+    //   value: {
+    //     id: string,
+    //     name: string,
+    //     price: number,
+    //     maxreq: number,
+    //     limit: number | null,
+    //     description: string | null
+    //   }
+    // }
+    return makeApiRequest('billing_current_plan');
+  },
+
+  getAvailablePlans: async () => {
+    // Backend: Return a list of available plans
+    // {
+    //   success: boolean,
+    //   value: Array<{
+    //     id: string,
+    //     name: string,
+    //     price: number,
+    //     maxreq: number,
+    //     limit: number | null,
+    //     description: string | null
+    //   }>
+    // }
+    return makeApiRequest('billing_available_plans');
+  },
+
+  initiatePlanUpgrade: async (planId: string) => {
+    // Backend: Initiate the plan upgrade process and return LigdiCash redirect URL
+    // {
+    //   success: boolean,
+    //   value: {
+    //     redirectUrl: string
+    //   }
+    // }
+    return makeApiRequest('billing_initiate_upgrade', { planId });
+  },
+
+  getBillingHistory: async () => {
+    // Backend: Return the billing history
+    // {
+    //   success: boolean,
+    //   value: Array<{
+    //     id: string,
+    //     date: string,
+    //     amount: number,
+    //     description: string,
+    //     status: 'paid' | 'pending' | 'failed'
+    //   }>
+    // }
+    return makeApiRequest('billing_history');
+  },
+};
+
 export default api;

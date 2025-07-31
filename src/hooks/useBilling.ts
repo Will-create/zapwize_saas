@@ -1,99 +1,93 @@
 import { useState, useEffect } from 'react';
 import { useNumbers } from './useNumbers';
+import { billingService } from '../services/api';
 
 // Types
-type Invoice = {
-  id: string;
-  date: string;
-  description: string;
-  amount: number;
-  status: 'paid' | 'failed';
-};
-
 type BillingPlan = {
-  planId: 'free' | 'pro' | 'business';
-  hasPaymentMethod: boolean;
+  id: string;
+  name: string;
+  price: number;
+  maxreq: number;
+  limit?: number;
+  description?: string;
 };
 
-// Mock invoices
-const mockInvoices: Invoice[] = [
-  {
-    id: 'inv_1',
-    date: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'Pro Plan - Monthly',
-    amount: 29.00,
-    status: 'paid',
-  },
-  {
-    id: 'inv_2',
-    date: new Date(Date.now() - 60 * 24 * 60 * 60 * 1000).toISOString(),
-    description: 'Pro Plan - Monthly',
-    amount: 29.00,
-    status: 'paid',
-  },
-];
+type BillingHistoryItem = {
+  order_id: string;
+  plan_name: string;
+  number_name: string;
+  phone_number: string;
+  amount: number;
+  paid_amount: number;
+  status: 'paid' | 'pending' | 'failed';
+  date: string;
+  expire?: string;
+  description: string;
+};
 
 // Default plan
 const defaultPlan: BillingPlan = {
-  planId: 'free',
-  hasPaymentMethod: false,
+  id: 'free',
+  name: 'Free Plan',
+  price: 0,
+  maxreq: 100,
+  description: 'Basic features for small projects'
 };
 
 export const useBilling = () => {
-  const [invoices, setInvoices] = useState<Invoice[]>([]);
   const [currentPlan, setCurrentPlan] = useState<BillingPlan>(defaultPlan);
+  const [availablePlans, setAvailablePlans] = useState<BillingPlan[]>([]);
+  const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
   const { numbers } = useNumbers();
   
-  // Load mock data on mount
-  useEffect(() => {
-    // In a real app, these would be API calls
-    const storedInvoices = localStorage.getItem('zapwize_invoices');
-    const storedPlan = localStorage.getItem('zapwize_current_plan');
-    
-    setInvoices(storedInvoices ? JSON.parse(storedInvoices) : mockInvoices);
-    setCurrentPlan(storedPlan ? JSON.parse(storedPlan) : defaultPlan);
-  }, []);
+  const fetchBillingData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [currentPlanData, availablePlansData, billingHistoryData] = await Promise.all([
+        billingService.getCurrentPlan(),
+        billingService.getAvailablePlans(),
+        billingService.getBillingHistory()
+      ]);
 
-  // Save to localStorage whenever data changes
-  useEffect(() => {
-    localStorage.setItem('zapwize_invoices', JSON.stringify(invoices));
-    localStorage.setItem('zapwize_current_plan', JSON.stringify(currentPlan));
-  }, [invoices, currentPlan]);
-
-  // Update plan
-  const updatePlan = (numberId: string, planId: string) => {
-    // In a real app, this would make an API call to update the plan
-    // and then reflect the changes in the UI
-    
-    setCurrentPlan({
-      planId: planId as 'free' | 'pro' | 'business',
-      hasPaymentMethod: planId === 'free' ? false : true,
-    });
-    
-    // If upgrading from free, generate a new invoice
-    if (planId !== 'free' && currentPlan.planId === 'free') {
-      const amount = planId === 'pro' ? 29.00 : 99.00;
-      
-      const newInvoice: Invoice = {
-        id: `inv_${Math.random().toString(36).substr(2, 9)}`,
-        date: new Date().toISOString(),
-        description: `${planId.charAt(0).toUpperCase() + planId.slice(1)} Plan - Monthly`,
-        amount,
-        status: 'paid',
-      };
-      
-      setInvoices([newInvoice, ...invoices]);
+      setCurrentPlan(currentPlanData.value);
+      setAvailablePlans(availablePlansData.value);
+      setBillingHistory(billingHistoryData.value);
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+    } finally {
+      setLoading(false);
     }
   };
 
+  const initiatePlanUpgrade = async (planId: string) => {
+    try {
+      const response = await billingService.initiatePlanUpgrade(planId);
+      return response.value.redirectUrl;
+    } catch (err) {
+      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+      return null;
+    }
+  };
+
+  useEffect(() => {
+    fetchBillingData();
+  }, []);
+
   return {
-    invoices,
     currentPlan,
+    availablePlans,
+    billingHistory,
+    loading,
+    error,
     linkedNumbers: numbers.map(number => ({
       id: number.id,
       name: number.name,
-      phoneNumber: number.phoneNumber,
+      phoneNumber: number.phonenumber,
     })),
-    updatePlan,
+    initiatePlanUpgrade,
+    refetchBillingData: fetchBillingData
   };
 };

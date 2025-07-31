@@ -1,7 +1,9 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bell, Check, X, Filter, CheckCircle, AlertCircle, Info } from 'lucide-react';
 import Toast from '../components/ui/Toast';
+import { notificationsService } from '../services/api';
+import { useAlertStore } from '../store/alertStore';
 
 type Notification = {
   id: string;
@@ -12,85 +14,49 @@ type Notification = {
   createdAt: string;
 };
 
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Number Successfully Linked',
-    message: 'Your WhatsApp number has been successfully linked to your account.',
-    type: 'success',
-    isRead: false,
-    createdAt: '2025-02-20T10:00:00Z',
-  },
-  {
-    id: '2',
-    title: 'Campaign Completed',
-    message: 'Your broadcast campaign "Flash Sale" has been completed successfully.',
-    type: 'info',
-    isRead: true,
-    createdAt: '2025-02-19T15:30:00Z',
-  },
-  {
-    id: '3',
-    title: 'API Key Created',
-    message: 'New API key "Marketing Bot" has been created for your account.',
-    type: 'success',
-    isRead: false,
-    createdAt: '2025-02-18T09:15:00Z',
-  },
-  {
-    id: '4',
-    title: 'Failed Message Delivery',
-    message: 'Some messages in campaign "Newsletter" failed to deliver. Check the campaign details for more information.',
-    type: 'error',
-    isRead: false,
-    createdAt: '2025-02-17T14:20:00Z',
-  },
-  {
-    id: '5',
-    title: 'Webhook Configuration Update',
-    message: 'Your webhook endpoint configuration has been updated successfully.',
-    type: 'info',
-    isRead: true,
-    createdAt: '2025-02-16T11:45:00Z',
-  },
-];
-
 const NotificationsPage = () => {
   const { t } = useTranslation();
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
   const [filter, setFilter] = useState<'all' | 'unread'>('all');
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({
-    show: false,
-    message: '',
-    type: 'success',
-  });
+  const { show: showAlert } = useAlertStore();
+  const [isLoading, setIsLoading] = useState(true);
 
-  const filteredNotifications = filter === 'all' 
-    ? notifications 
-    : notifications.filter(n => !n.isRead);
+  useEffect(() => {
+    fetchNotifications();
+  }, [filter]);
 
-  const markAsRead = (id: string) => {
-    setNotifications(notifications.map(n => 
-      n.id === id ? { ...n, isRead: true } : n
-    ));
-    setToast({
-      show: true,
-      message: 'Notification marked as read',
-      type: 'success',
-    });
+  const fetchNotifications = async () => {
+    setIsLoading(true);
+    try {
+      const fetchedNotifications = await notificationsService.fetchNotifications(filter);
+      setNotifications(fetchedNotifications);
+    } catch (error) {
+      showAlert('Failed to fetch notifications', 'error');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const markAllAsRead = () => {
-    setNotifications(notifications.map(n => ({ ...n, isRead: true })));
-    setToast({
-      show: true,
-      message: 'All notifications marked as read',
-      type: 'success',
-    });
+  const markAsRead = async (id: string) => {
+    try {
+      await notificationsService.markAsRead(id);
+      setNotifications(notifications.map(n => 
+        n.id === id ? { ...n, isRead: true } : n
+      ));
+      showAlert('Notification marked as read', 'success');
+    } catch (error) {
+      showAlert('Failed to mark notification as read', 'error');
+    }
+  };
+
+  const markAllAsRead = async () => {
+    try {
+      await notificationsService.markAllAsRead();
+      setNotifications(notifications.map(n => ({ ...n, isRead: true })));
+      showAlert('All notifications marked as read', 'success');
+    } catch (error) {
+      showAlert('Failed to mark all notifications as read', 'error');
+    }
   };
 
   const getNotificationIcon = (type: Notification['type']) => {
@@ -116,6 +82,10 @@ const NotificationsPage = () => {
     if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
     return `${Math.floor(diffInSeconds / 86400)}d ago`;
   };
+
+  if (isLoading) {
+    return <div className="flex justify-center items-center h-64">Loading...</div>;
+  }
 
   return (
     <div>
@@ -147,7 +117,7 @@ const NotificationsPage = () => {
         </div>
 
         <div className="divide-y divide-gray-200">
-          {filteredNotifications.map((notification) => (
+          {notifications.map((notification) => (
             <div
               key={notification.id}
               className={`p-4 hover:bg-gray-50 transition-colors duration-150 ${
@@ -183,7 +153,7 @@ const NotificationsPage = () => {
             </div>
           ))}
 
-          {filteredNotifications.length === 0 && (
+          {notifications.length === 0 && (
             <div className="p-8 text-center">
               <Bell size={40} className="mx-auto text-gray-400 mb-4" />
               <p className="text-gray-500">No notifications to display</p>
@@ -191,13 +161,6 @@ const NotificationsPage = () => {
           )}
         </div>
       </div>
-
-      <Toast
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
     </div>
   );
 };

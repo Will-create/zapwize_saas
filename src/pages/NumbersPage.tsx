@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Plus, Search, Edit, ExternalLink as External } from 'lucide-react';
+import { Plus, Search, QrCode, ExternalLink as External } from 'lucide-react';
 import AddNumberModal from '../components/numbers/AddNumberModal';
 import QRScanModal, { ConnectionData } from '../components/numbers/QRScanModal';
 import { useNumbers, WhatsAppNumber } from '../hooks/useNumbers';
