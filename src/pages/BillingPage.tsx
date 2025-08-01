@@ -20,7 +20,7 @@ const BillingPage: React.FC = () => {
   const navigate = useNavigate();
   const [paymentStatus, setPaymentStatus] = useState<'success' | 'failure' | null>(null);
   const [selectedNumber, setSelectedNumber] = useState<string>('');
-  const [selectedMonths, setSelectedMonths] = useState<number>(1);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
 
   useEffect(() => {
     const params = new URLSearchParams(location.search);
@@ -46,7 +46,7 @@ const BillingPage: React.FC = () => {
       alert("Please select a WhatsApp number first.");
       return;
     }
-    const response = await initiatePlanUpgrade(planId, selectedNumber, selectedMonths);
+    const response = await initiatePlanUpgrade(planId, selectedNumber, billingCycle);
     if (response && response.redirectUrl) {
       window.location.href = response.redirectUrl;
     } else {
@@ -54,12 +54,11 @@ const BillingPage: React.FC = () => {
     }
   };
 
-  const durationOptions = [
-    { value: 1, label: '1 month' },
-    { value: 3, label: '3 months' },
-    { value: 6, label: '6 months' },
-    { value: 12, label: '12 months' },
-  ];
+  const renderPlanPrice = (plan: BillingPlan) => {
+    const price = billingCycle === 'monthly' ? plan.price : plan.price2;
+    const cycleText = billingCycle === 'monthly' ? '/month' : '/year';
+    return `${price}${cycleText}`;
+  };
 
   if (paymentStatus) {
     return (
@@ -128,32 +127,34 @@ const BillingPage: React.FC = () => {
         </div>
       )}
 
+      {/* Billing Cycle Tabs */}
+      <div className="mb-6">
+        <div className="flex space-x-1 rounded-xl bg-gray-200 p-1">
+          {['monthly', 'yearly'].map((cycle) => (
+            <button
+              key={cycle}
+              className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5 ${
+                billingCycle === cycle
+                  ? 'bg-white shadow text-blue-700'
+                  : 'text-gray-700 hover:bg-white/[0.12] hover:text-blue-700'
+              }`}
+              onClick={() => setBillingCycle(cycle as 'monthly' | 'yearly')}
+            >
+              {cycle.charAt(0).toUpperCase() + cycle.slice(1)}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* Available Plans */}
       <div className="bg-white rounded-lg shadow-md p-6 mb-8">
         <h2 className="text-xl font-semibold mb-4">Available Plans</h2>
-        <div className="mb-6">
-          <div className="flex space-x-1 rounded-xl bg-gray-200 p-1">
-            {durationOptions.map((option) => (
-              <button
-                key={option.value}
-                className={`w-full rounded-lg py-2.5 text-sm font-medium leading-5 ${
-                  selectedMonths === option.value
-                    ? 'bg-white shadow text-blue-700'
-                    : 'text-gray-700 hover:bg-white/[0.12] hover:text-blue-700'
-                }`}
-                onClick={() => setSelectedMonths(option.value)}
-              >
-                {option.label}
-              </button>
-            ))}
-          </div>
-        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {availablePlans.map((plan: BillingPlan) => (
             <div key={plan.id} className="border rounded-lg p-4 flex flex-col justify-between">
               <div>
                 <h3 className="font-bold text-lg mb-2">{plan.name}</h3>
-                <p className="text-2xl font-bold mb-2">${plan.price} <span className="text-sm font-normal">/month</span></p>
-                <p className="text-gray-600 mb-2">Total: ${(plan.price * selectedMonths).toFixed(2)} for {selectedMonths} month{selectedMonths > 1 ? 's' : ''}</p>
+                <p className="text-2xl font-bold mb-2">{renderPlanPrice(plan)}</p>
                 <p>Max Requests: {plan.maxreq}</p>
                 <p>Limit: {plan.limit || 'Unlimited'}</p>
                 <p className="mt-2 text-sm text-gray-500">{plan.description || 'No description available.'}</p>
@@ -167,7 +168,7 @@ const BillingPage: React.FC = () => {
                     : 'bg-blue-500 text-white hover:bg-blue-600'
                 }`}
               >
-                {plan.id === currentPlan.id ? 'Current Plan' : `Upgrade for ${selectedMonths} month${selectedMonths > 1 ? 's' : ''}`}
+                {plan.id === currentPlan.id ? 'Current Plan' : `Upgrade to ${billingCycle} plan`}
               </button>
             </div>
           ))}

@@ -8,7 +8,7 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "deploy": "vite build && cd dist && total5 3535"
+    "deploy": "bash compile.sh"
   },
   "dependencies": {
     "@headlessui/react": "^1.7.18",
