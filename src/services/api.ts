@@ -152,7 +152,7 @@ export const numbersService = {
   },
 
   read: async (id: string) => {
-    return makeApiRequest('numbers_read', { id });
+    return makeApiRequest('numbers_read/' + id);
   },
 
   list: async () => {
@@ -160,7 +160,7 @@ export const numbersService = {
   },
 
   remove: async (id: string) => {
-    return makeApiRequest('numbers_remove', { id });
+    return makeApiRequest('numbers_remove/' + id);
   },
 
   logout: async (id: string) => {
@@ -252,7 +252,7 @@ export const notificationsService = {
 };
 
 export const billingService = {
-  getCurrentPlan: async () => {
+  getCurrentPlan: async (numberid: string) => {
     // Backend: Return the current plan details
     // {
     //   success: boolean,
@@ -265,7 +265,7 @@ export const billingService = {
     //     description: string | null
     //   }
     // }
-    return makeApiRequest('billing_current_plan');
+    return makeApiRequest('billing_current_plan/' + numberid);
   },
 
   getAvailablePlans: async () => {
@@ -281,10 +281,10 @@ export const billingService = {
     //     description: string | null
     //   }>
     // }
-    return makeApiRequest('billing_available_plans');
+    return makeApiRequest('billing_plans');
   },
 
-  initiatePlanUpgrade: async (planId: string) => {
+  initiatePlanUpgrade: async (planid: string, numberid: string, qty: number = 1) => {
     // Backend: Initiate the plan upgrade process and return LigdiCash redirect URL
     // {
     //   success: boolean,
@@ -292,10 +292,10 @@ export const billingService = {
     //     redirectUrl: string
     //   }
     // }
-    return makeApiRequest('billing_initiate_upgrade', { planId });
+    return makeApiRequest('billing_plans_upgrade/' + numberid, { planid, numberid, qty: 1 });
   },
 
-  getBillingHistory: async () => {
+  getBillingHistory: async (numberid: string) => {
     // Backend: Return the billing history
     // {
     //   success: boolean,
@@ -307,7 +307,7 @@ export const billingService = {
     //     status: 'paid' | 'pending' | 'failed'
     //   }>
     // }
-    return makeApiRequest('billing_history');
+    return makeApiRequest('billing_history/' + numberid);
   },
 };
 

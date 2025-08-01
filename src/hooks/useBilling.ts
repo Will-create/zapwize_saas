@@ -3,7 +3,7 @@ import { useNumbers } from './useNumbers';
 import { billingService } from '../services/api';
 
 // Types
-type BillingPlan = {
+export type BillingPlan = {
   id: string;
   name: string;
   price: number;
@@ -12,7 +12,7 @@ type BillingPlan = {
   description?: string;
 };
 
-type BillingHistoryItem = {
+export type BillingHistoryItem = {
   order_id: string;
   plan_name: string;
   number_name: string;
@@ -42,19 +42,19 @@ export const useBilling = () => {
   const [error, setError] = useState<Error | null>(null);
   const { numbers } = useNumbers();
   
-  const fetchBillingData = async () => {
+  const fetchBillingData = async (numberid?: string) => {
     setLoading(true);
     setError(null);
     try {
       const [currentPlanData, availablePlansData, billingHistoryData] = await Promise.all([
-        billingService.getCurrentPlan(),
+        numberid && billingService.getCurrentPlan(numberid),
         billingService.getAvailablePlans(),
-        billingService.getBillingHistory()
+        numberid && billingService.getBillingHistory(numberid)
       ]);
 
-      setCurrentPlan(currentPlanData.value);
-      setAvailablePlans(availablePlansData.value);
-      setBillingHistory(billingHistoryData.value);
+      setCurrentPlan(currentPlanData || defaultPlan);
+      setAvailablePlans(availablePlansData);
+      setBillingHistory(billingHistoryData || []);
     } catch (err) {
       setError(err instanceof Error ? err : new Error('An unknown error occurred'));
     } finally {
@@ -62,15 +62,15 @@ export const useBilling = () => {
     }
   };
 
-  const initiatePlanUpgrade = async (planId: string) => {
-    try {
-      const response = await billingService.initiatePlanUpgrade(planId);
-      return response.value.redirectUrl;
-    } catch (err) {
-      setError(err instanceof Error ? err : new Error('An unknown error occurred'));
-      return null;
-    }
-  };
+  const initiatePlanUpgrade = async (planId: string, numberId: string, qty: number) => {
+  try {
+    const response = await billingService.initiatePlanUpgrade(planId, numberId, qty);
+    return response;
+  } catch (err) {
+    setError(err instanceof Error ? err : new Error('An unknown error occurred'));
+    return null;
+  }
+};
 
   useEffect(() => {
     fetchBillingData();
