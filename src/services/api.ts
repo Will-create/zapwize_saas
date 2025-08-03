@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { handleApiError, extractErrorMessage } from '../utils/errorHandler';
 
 const BASE_URL = 'https://zapwize.com';
 
@@ -58,8 +59,10 @@ const makeApiRequest = async (schema: string, data?: any) => {
       data,
       error: error.response?.data || error.message
     });
+    const errorMessage = extractErrorMessage(error);
     
-    throw error.response?.data || error;
+    // Throw a standardized error object
+    throw { message: errorMessage, originalError: error };
   }
 };
 
@@ -70,18 +73,39 @@ export const authService = {
       const response = await makeApiRequest('account_login', { email, password });
       console.log('Login response:', response);
       
-      if (response.success && response.value) {
-        localStorage.setItem('token', response.value);
-        return {
-          success: true,
-          value: {
-            token: response.value,
+      // Handle array response format
+      if (Array.isArray(response)) {
+        const firstItem = response[0];
+        
+        // Check if login failed
+        if (!firstItem.success) {
+          throw firstItem;
+        }
+        
+        // If successful, extract the token
+        if (firstItem.token) {
+          localStorage.setItem('token', firstItem.token);
+          return [{
+            success: true,
+            token: firstItem.token,
             user: {
               email,
             },
+          }];
+        }
+      }
+      // Handle object response format
+      else if (response.success && response.value) {
+        localStorage.setItem('token', response.value);
+        return {
+          success: true,
+          token: response.value,
+          user: {
+            email,
           },
         };
       }
+      
       throw new Error('Invalid login response');
     } catch (error: any) {
       console.error('Login error:', error);
@@ -253,62 +277,64 @@ export const notificationsService = {
 
 export const billingService = {
   getCurrentPlan: async (numberid: string) => {
-    // Backend: Return the current plan details
-    // {
-    //   success: boolean,
-    //   value: {
-    //     id: string,
-    //     name: string,
-    //     price: number,
-    //     maxreq: number,
-    //     limit: number | null,
-    //     description: string | null
-    //   }
-    // }
     return makeApiRequest('billing_current_plan/' + numberid);
   },
 
   getAvailablePlans: async () => {
-    // Backend: Return a list of available plans
-    // {
-    //   success: boolean,
-    //   value: Array<{
-    //     id: string,
-    //     name: string,
-    //     price: number,
-    //     maxreq: number,
-    //     limit: number | null,
-    //     description: string | null
-    //   }>
-    // }
     return makeApiRequest('billing_plans');
   },
 
   initiatePlanUpgrade: async (planid: string, numberid: string, qty: number = 1) => {
-    // Backend: Initiate the plan upgrade process and return LigdiCash redirect URL
-    // {
-    //   success: boolean,
-    //   value: {
-    //     redirectUrl: string
-    //   }
-    // }
     return makeApiRequest('billing_plans_upgrade/' + numberid, { planid, numberid, qty: 1 });
   },
 
   getBillingHistory: async (numberid: string) => {
-    // Backend: Return the billing history
-    // {
-    //   success: boolean,
-    //   value: Array<{
-    //     id: string,
-    //     date: string,
-    //     amount: number,
-    //     description: string,
-    //     status: 'paid' | 'pending' | 'failed'
-    //   }>
-    // }
     return makeApiRequest('billing_history/' + numberid);
   },
+
+  validateCoupon: async (couponCode: string, planId: string, numberid: string) => {
+    try {
+      const response = await makeApiRequest('billing_validate_coupon', { 
+        code: couponCode, 
+        planid: planId, 
+        numberid 
+      });
+      
+      return response;
+    } catch (error) {
+      return {
+        success: false,
+        value: {
+          valid: false,
+          discountType: null,
+          discountValue: null,
+          message: extractErrorMessage(error)
+        }
+      };
+    }
+  },
+
+  initiatePlanUpgradeWithCoupon: async (planId: string, numberid: string, cycle: 'monthly' | 'yearly', couponCode?: string) => {
+    return makeApiRequest('billing_plans_upgrade/' + numberid, { 
+      planid: planId, 
+      numberid, 
+      cycle,
+      coupon: couponCode || null 
+    });
+  },
+
+  getOrderSummary: async (planId: string, numberId: string, cycle: 'monthly' | 'yearly', couponCode?: string) => {
+    try {
+      const response = await makeApiRequest('billing_order_summary', {
+        planid: planId,
+        numberid: numberId,
+        cycle: cycle,
+        coupon: couponCode || null
+      });
+      return response;
+    } catch (error) {
+    }
+  }
 };
 
 export default api;

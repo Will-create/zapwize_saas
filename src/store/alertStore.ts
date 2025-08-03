@@ -1,67 +1,31 @@
 import { create } from 'zustand';
 
-type AlertState = {
-  isVisible: boolean;
+type AlertType = 'success' | 'error' | 'warning' | 'info';
+
+interface AlertAction {
+  label: string;
+  onPress: () => void;
+}
+
+interface AlertState {
+  visible: boolean;
   message: string;
-  severity: 'success' | 'warning' | 'error' | 'info';
-  action?: {
-    label: string;
-    onPress: () => void;
-  };
-  duration?: number;
-  countdown: number;
-  timeoutId?: number;
-  intervalId?: number;
-  show: (
-    message: string,
-    severity: AlertState['severity'],
-    action?: AlertState['action'],
-    duration?: number
-  ) => void;
+  type: AlertType;
+  action?: AlertAction;
+  autoHideTimeout?: number; // in seconds
+  show: (message: string, type: AlertType, action?: AlertAction, autoHideTimeout?: number) => void;
   hide: () => void;
-};
+}
 
-export const useAlertStore = create<AlertState>((set, get) => ({
-  isVisible: false,
+export const useAlertStore = create<AlertState>((set) => ({
+  visible: false,
   message: '',
-  severity: 'info',
+  type: 'info',
   action: undefined,
-  duration: undefined,
-  countdown: 0,
-  timeoutId: undefined,
-  intervalId: undefined,
-
-  show: (message, severity, action, duration) => {
-    const { timeoutId, intervalId } = get();
-    if (timeoutId) clearTimeout(timeoutId);
-    if (intervalId) clearInterval(intervalId);
-
-    set({
-      isVisible: true,
-      message,
-      severity,
-      action,
-      duration,
-      countdown: duration || 0,
-    });
-
-    if (duration) {
-      const newIntervalId = setInterval(() => {
-        set((state) => ({ countdown: state.countdown > 0 ? state.countdown - 1 : 0 }));
-      }, 1000);
-
-      const newTimeoutId = setTimeout(() => {
-        get().hide();
-      }, duration * 1000);
-
-      set({ timeoutId: newTimeoutId as any, intervalId: newIntervalId as any });
-    }
-  },
-
-  hide: () => {
-    const { timeoutId, intervalId } = get();
-    if (timeoutId) clearTimeout(timeoutId);
-    if (intervalId) clearInterval(intervalId);
-    set({ isVisible: false, timeoutId: undefined, intervalId: undefined });
-  },
+  autoHideTimeout: undefined,
+  
+  show: (message, type, action, autoHideTimeout) => 
+    set({ visible: true, message, type, action, autoHideTimeout }),
+  
+  hide: () => set({ visible: false })
 }));

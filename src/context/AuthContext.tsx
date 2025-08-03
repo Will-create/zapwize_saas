@@ -1,6 +1,7 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
 import { authService } from '../services/api';
+import { extractErrorMessage } from '../utils/errorHandler';
+import { useNavigate } from 'react-router-dom';
 
 // Define user type
 type User = {
@@ -71,11 +72,33 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const login = async (email: string, password: string) => {
     try {
       const response = await authService.login(email, password);
-      if (response.success) {
-        localStorage.setItem('token', response.value.token);
-        setUser(response.value.user);
+      
+      // Handle array response format
+      if (Array.isArray(response)) {
+        const firstItem = response[0];
+        
+        // Check if the response indicates an error
+        if (!firstItem.success) {
+          throw new Error(firstItem.error || firstItem.value || 'Login failed');
+        }
+        
+        // If successful, extract the token and user data
+        if (firstItem.token) {
+          localStorage.setItem('token', firstItem.token);
+          setUser(firstItem.user || { email });
+          return firstItem;
+        }
+      } 
+      // Handle object response format
+      else if (response && response.token) {
+        localStorage.setItem('token', response.token);
+        setUser(response.user || { email });
+        return response;
       }
+      
+      throw new Error('Invalid login response');
     } catch (error) {
+      console.error('Login error:', error);
       throw error;
     }
   };
@@ -89,7 +112,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(response.value.user);
       }
     } catch (error) {
-      throw error;
+      console.error('Register error:', error);
+      throw new Error(extractErrorMessage(error));
     }
   };
 
@@ -112,7 +136,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser({ ...user!, ...response.value });
       }
     } catch (error) {
-      throw error;
+      console.error('Update profile error:', error);
+      throw new Error(extractErrorMessage(error));
     }
   };
 
@@ -121,7 +146,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await authService.updatePassword({ currentPassword, newPassword });
     } catch (error) {
-      throw error;
+      console.error('Update password error:', error);
+      throw new Error(extractErrorMessage(error));
     }
   };
 
@@ -130,7 +156,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await authService.resetPassword(email);
     } catch (error) {
-      throw error;
+      console.error('Reset password error:', error);
+      throw new Error(extractErrorMessage(error));
     }
   };
 
@@ -139,7 +166,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       await authService.verifyAccount(token);
     } catch (error) {
-      throw error;
+      console.error('Verify account error:', error);
+      throw new Error(extractErrorMessage(error));
     }
   };
 

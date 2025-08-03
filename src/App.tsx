@@ -1,6 +1,7 @@
 import { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
+import GlobalAlertBanner from './components/ui/GlobalAlertBanner';
 
 // Loading component
 const PageLoader = () => (
@@ -37,49 +38,52 @@ import { AuthProvider } from './context/AuthContext';
 
 function App() {
   return (
-    <Router>
-      <AuthProvider>
-        <Suspense fallback={<PageLoader />}>
-          <Routes>
-            {/* Public routes */}
-            <Route path="/" element={<LandingPage />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/reset-password" element={<ResetPassword />} />
-            <Route path="/verify-account" element={<VerifyAccount />} />
-            
-            {/* Dashboard routes - wrapped in MainLayout */}
-            <Route
-              path="/dashboard"
-              element={
-                <Suspense fallback={<PageLoader />}>
-                  <MainLayout />
-                </Suspense>
-              }
-            >
-              <Route index element={<DashboardPage />} />
-              {/* <Route path="chats" element={<ChatsPage />} /> */}
-              <Route path="numbers" element={<NumbersPage />} />
-              {/* <Route path="campaigns" element={<CampaignsPage />} /> */}
-              {/* <Route path="templates" element={<TemplatesPage />} /> */}
-              <Route path="ai-bot" element={<AIBotPage />} />
-              <Route path="api-keys" element={<ApiKeysPage />} />
-              <Route path="documentation" element={<DocumentationPage />} />
-              <Route path="billing" element={<BillingPage />} />
-              <Route path="billing/payment" element={<PaymentPage />} />
-              <Route path="settings" element={<SettingsPage />} />
-              <Route path="profile" element={<ProfilePage />} />
-              <Route path="profile/change-password" element={<ChangePassword />} />
-              <Route path="notifications" element={<NotificationsPage />} />
-              <Route path="users" element={<UsersPage />} />
-            </Route>
-            
-            {/* Fallback route */}
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-        </Suspense>
-      </AuthProvider>
-    </Router>
+    <>
+      <GlobalAlertBanner />
+      <Router>
+        <AuthProvider>
+          <Suspense fallback={<PageLoader />}>
+            <Routes>
+              {/* Public routes */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
+              <Route path="/verify-account" element={<VerifyAccount />} />
+              
+              {/* Dashboard routes - wrapped in MainLayout */}
+              <Route
+                path="/dashboard"
+                element={
+                  <Suspense fallback={<PageLoader />}>
+                    <MainLayout />
+                  </Suspense>
+                }
+              >
+                <Route index element={<DashboardPage />} />
+                {/* <Route path="chats" element={<ChatsPage />} /> */}
+                <Route path="numbers" element={<NumbersPage />} />
+                {/* <Route path="campaigns" element={<CampaignsPage />} /> */}
+                {/* <Route path="templates" element={<TemplatesPage />} /> */}
+                <Route path="ai-bot" element={<AIBotPage />} />
+                <Route path="api-keys" element={<ApiKeysPage />} />
+                <Route path="documentation" element={<DocumentationPage />} />
+                <Route path="billing" element={<BillingPage />} />
+                <Route path="billing/payment" element={<PaymentPage />} />
+                <Route path="settings" element={<SettingsPage />} />
+                <Route path="profile" element={<ProfilePage />} />
+                <Route path="profile/change-password" element={<ChangePassword />} />
+                <Route path="notifications" element={<NotificationsPage />} />
+                <Route path="users" element={<UsersPage />} />
+              </Route>
+              
+              {/* Fallback route */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </AuthProvider>
+      </Router>
+    </>
   );
 }
 

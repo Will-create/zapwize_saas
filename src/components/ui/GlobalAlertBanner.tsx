@@ -1,10 +1,24 @@
-import { FC } from 'react';
+import { FC, useEffect } from 'react';
 import { useAlertStore } from '../../store/alertStore';
 import { X, CheckCircle, AlertTriangle, Info } from 'lucide-react';
 import Button from './Button';
 
 const GlobalAlertBanner: FC = () => {
-  const { isVisible, message, severity, action, duration, countdown, hide } = useAlertStore();
+  const { isVisible, message, severity, action, duration, countdown, hide, autoHideTimeout } = useAlertStore();
+
+  useEffect(() => {
+    let timer: NodeJS.Timeout | null = null;
+    
+    if (isVisible && autoHideTimeout) {
+      timer = setTimeout(() => {
+        hide();
+      }, autoHideTimeout * 1000);
+    }
+    
+    return () => {
+      if (timer) clearTimeout(timer);
+    };
+  }, [isVisible, autoHideTimeout, hide]);
 
   if (!isVisible) return null;
 
