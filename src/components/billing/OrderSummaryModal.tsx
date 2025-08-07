@@ -53,7 +53,6 @@ const OrderSummaryModal: React.FC<OrderSummaryModalProps> = ({
 
   // Initialize the component by fetching the summary if not already available
   useEffect(() => {
-    let isMounted = true;
     
     const loadSummary = async () => {
       if (isOpen && !orderSummary && !processingSummary) {

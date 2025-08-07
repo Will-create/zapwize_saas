@@ -1,7 +1,7 @@
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Smartphone, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
+import { Link, useNavigate } from 'react-router-dom';
 
 const Register = () => {
   const [name, setName] = useState('');
@@ -68,7 +68,7 @@ const Register = () => {
       await register(name, email, password);
       navigate('/dashboard');
     } catch (error: any) {
-      setFormError(Array.isArray(error) ? error[0].error : 'Registration failed. Please try again.');
+      setFormError(error.message || 'Registration failed. Please try again.');
     } finally {
       setIsLoading(false);
     }
