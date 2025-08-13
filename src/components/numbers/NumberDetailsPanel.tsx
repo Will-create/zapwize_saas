@@ -8,7 +8,7 @@ import { useAlertStore } from '../../store/alertStore';
 interface NumberDetailsPanelProps {
   number: WhatsAppNumber;
   onClose: () => void;
-  onConfirmAction: (type: 'remove' | 'stop' | 'logout', id: string) => void;
+  onConfirmAction: (type: 'remove' | 'logout', id: string) => void;
   onReconnect: (id: string) => void;
   isActionLoading: boolean;
 }
@@ -23,9 +23,6 @@ const NumberDetailsPanel: FC<NumberDetailsPanelProps> = ({
   const { pauseNumber, resumeNumber, statusNumber } = useNumbers();
   const [isPaused, setIsPaused] = useState(number.status === 'paused');
   const [isPauseResumeLoading, setIsPauseResumeLoading] = useState(false);
-  const [isLogoutLoading, setIsLogoutLoading] = useState(false);
-  const [isStopLoading, setIsStopLoading] = useState(false);
-  const [isRemoveLoading, setIsRemoveLoading] = useState(false);
   const { show: showAlert } = useAlertStore();
 
   // Auto-update status every 30 seconds
@@ -60,6 +57,14 @@ const NumberDetailsPanel: FC<NumberDetailsPanelProps> = ({
     }
   };
 
+  // Determine which buttons should be shown based on status
+  const shouldShowPauseResumeButton = ['connected', 'paused'].includes(number.status);
+  const shouldShowReconnectButton = number.status !== 'connected' && number.status !== 'connecting';
+  const shouldShowLogoutButton = number.status === 'connected' || number.status === 'paused';
+  
+  // All numbers can be removed regardless of status, but we might want to add a confirmation
+  // for active numbers
+
   return (
     <div className="fixed inset-y-0 right-0 w-full md:w-96 bg-white shadow-lg z-40 transform translate-x-0 transition-transform ease-in-out duration-300 flex flex-col">
       {/* Header */}
@@ -89,15 +94,18 @@ const NumberDetailsPanel: FC<NumberDetailsPanelProps> = ({
 
       {/* Actions */}
       <div className="p-4 border-t border-gray-200 space-y-2">
-        <Button
-          onClick={handleTogglePause}
-          isLoading={isPauseResumeLoading}
-          className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
-        >
-          {isPaused ? <Play size={16} className="mr-2" /> : <Pause size={16} className="mr-2" />}
-          {isPaused ? 'Resume Number' : 'Pause Number'}
-        </Button>
-        {number.status !== 'connected' && (
+        {shouldShowPauseResumeButton && (
+          <Button
+            onClick={handleTogglePause}
+            isLoading={isPauseResumeLoading}
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+          >
+            {isPaused ? <Play size={16} className="mr-2" /> : <Pause size={16} className="mr-2" />}
+            {isPaused ? 'Resume Number' : 'Pause Number'}
+          </Button>
+        )}
+        
+        {shouldShowReconnectButton && (
           <Button
             onClick={() => onReconnect(number.id)}
             className="w-full inline-flex items-center justify-center px-4 py-2 border border-blue-300 text-sm font-medium rounded-md text-blue-700 bg-blue-50 hover:bg-blue-100"
@@ -106,22 +114,19 @@ const NumberDetailsPanel: FC<NumberDetailsPanelProps> = ({
             Reconnect Number
           </Button>
         )}
-        <Button
-          onClick={() => onConfirmAction('logout', number.id)}
-          isLoading={isActionLoading}
-          className="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
-        >
-          <Power size={16} className="mr-2" />
-          Logout Number
-        </Button>
-        <Button
-          onClick={() => onConfirmAction('stop', number.id)}
-          isLoading={isActionLoading}
-          className="w-full inline-flex items-center justify-center px-4 py-2 border border-yellow-300 text-sm font-medium rounded-md text-yellow-700 bg-yellow-50 hover:bg-yellow-100"
-        >
-          <Power size={16} className="mr-2" />
-          Stop Number
-        </Button>
+        
+        {shouldShowLogoutButton && (
+          <Button
+            onClick={() => onConfirmAction('logout', number.id)}
+            isLoading={isActionLoading}
+            className="w-full inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-red-50 hover:bg-red-100"
+          >
+            <Power size={16} className="mr-2" />
+            Logout Number
+          </Button>
+        )}
+        
+        {/* Remove button is always available */}
         <Button
           onClick={() => onConfirmAction('remove', number.id)}
           isLoading={isActionLoading}

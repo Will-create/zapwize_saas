@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { numbersService } from '../services/api';
 
 // Types
-type NumberStatus = 'connected' | 'pending' | 'disconnected';
+type NumberStatus = 'connected' | 'pending' | 'disconnected' | 'paused' | 'connecting' | 'error';
 
 export type WhatsAppNumber = {
   id: string;
@@ -29,23 +29,47 @@ export const useNumbers = () => {
   
   // Load numbers on mount
   useEffect(() => {
-    loadNumbers();
+    fetchNumbers();
   }, []);
 
-  const loadNumbers = async () => {
+  const fetchNumbers = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
-      setError(null);
       const response = await numbersService.list();
-      if (response) {
-        setNumbers(response);
-      }
-    } catch (err) {
-      const error = err as Error;
-      console.error('Error loading numbers:', error);
-      setError(error.message || 'Failed to load WhatsApp numbers');
+      const mappedNumbers = response.map((number: any) => ({
+        ...number,
+        status: mapStatusFromApi(number.status),
+      }));
+      setNumbers(mappedNumbers);
+    } catch (error) {
+      setError(error as Error);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  // Update the status mapping function
+  const mapStatusFromApi = (apiStatus: string): NumberStatus => {
+    // Convert to lowercase for case-insensitive comparison
+    const status = apiStatus?.toLowerCase();
+    
+    // Map database status values to frontend status values
+    switch (status) {
+      case 'active':
+      case 'connected':
+        return 'connected';
+      case 'inactive':
+      case 'disconnected':
+        return 'disconnected';
+      case 'paused':
+        return 'paused';
+      case 'connecting':
+        return 'connecting';
+      case 'error':
+        return 'error';
+      default:
+        console.warn(`Unknown status from API: ${apiStatus}`);
+        return 'disconnected'; // Default fallback
     }
   };
 
