@@ -201,10 +201,20 @@ export const numbersService = {
   stop: async (id: string) => {
     return makeApiRequest('numbers_pause/' + id);
   },
-
+  qr: async (phone: string) => {
+    return makeApiRequest('instance_qr/' + phone);
+  },
+  pairring: async (phone: string) => {
+    return makeApiRequest('instance_pairring/' + phone);
+  },
+  state: async (phone: string) => {
+    return makeApiRequest('instance_state/' + phone);
+  },
   status: async (id: string) => {
     return makeApiRequest('numbers_status/' + id);
   }
+
+
 };
 
 // Fetch dashboard data for a specific number
@@ -336,5 +346,35 @@ export const billingService = {
     }
   }
 };
+
+export const APIKeysService = {
+  create: async (data: { name: string; value: string; permissions: string[] }) => {
+    return makeApiRequest('apikeys_create', data);
+  },
+
+  read: async (id: string) => {
+    return makeApiRequest('apikeys_read/' + id);
+  },
+
+  list: async () => {
+    return makeApiRequest('apikeys');
+  },
+
+  remove: async (id: string) => {
+    return makeApiRequest('apikeys_remove/' + id);
+  },
+
+  update: async (id: string, data: any) => {
+    return makeApiRequest('apikeys_update/' + id, data);
+  },
+
+  generate: async (id: string) => {
+    return makeApiRequest('apikeys_generate/' + id);
+  },
+
+  reset: async (id: string) => {
+    return makeApiRequest('apikeys_reset/' + id);
+  },
+}
 
 export default api;

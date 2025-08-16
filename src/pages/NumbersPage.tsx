@@ -45,8 +45,13 @@ const NumbersPage = () => {
     const number = numbers.find(n => n.id === id);
     if (number) {
       setConnectionData({ 
-        phone: number.phonenumber, 
+        phone: number.phonenumber.replace('+', '').replace(' ', ''),
         baseurl: number.baseurl, 
+        name: number.name,
+        userid: number.userid,
+        token: number.token,
+        webhook: number.webhook,
+        status: number.status,
         type: 'qrcode' 
       });
       setIsQRModalOpen(true);
@@ -238,11 +243,16 @@ const NumbersPage = () => {
             try {
               setIsAddingNumber(true);
               const newNumber = await addNumber(data);
+              console.log('New number:', newNumber);
               if (newNumber) {
                 setConnectionData({ 
-                  phone: newNumber.phonenumber, 
+                  phone: newNumber.phonenumber.replace('+', '').replace(' ', ''),
                   baseurl: newNumber.baseurl, 
                   value: newNumber.value, 
+                  token: newNumber.token, 
+                  webhook: newNumber.webhook, 
+                  userid: newNumber.userid, 
+                  status: newNumber.status, 
                   type: data.type 
                 });
                 setIsAddModalOpen(false);

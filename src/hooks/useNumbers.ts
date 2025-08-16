@@ -1,5 +1,7 @@
 import { useState, useEffect } from 'react';
 import { numbersService } from '../services/api';
+import { useTranslation } from 'react-i18next';
+
 
 // Types
 type NumberStatus = 'connected' | 'pending' | 'disconnected' | 'paused' | 'connecting' | 'error';
@@ -10,6 +12,8 @@ export type WhatsAppNumber = {
   phonenumber: string;
   webhook: string;
   baseurl: string;
+  token: string;
+  userid: string;
   status: NumberStatus;
   createdAt: string;
   value?: string; // For QR code or pairing code
@@ -26,6 +30,7 @@ export const useNumbers = () => {
   const [numbers, setNumbers] = useState<WhatsAppNumber[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const { t } = useTranslation();
   
   // Load numbers on mount
   useEffect(() => {
@@ -68,7 +73,7 @@ export const useNumbers = () => {
       case 'error':
         return 'error';
       default:
-        console.warn(`Unknown status from API: ${apiStatus}`);
+        console.warn(`${t('numbers.unknownStatusFromApi')}: ${apiStatus}`);
         return 'disconnected'; // Default fallback
     }
   };
@@ -84,15 +89,14 @@ export const useNumbers = () => {
         type: data.type
       });
       
-      if (response.success) {
-        const newNumber = { ...response.value, phonenumber: data.phonenumber, type: data.type };
-        setNumbers([...numbers, newNumber]);
+      if (response) {
+        const newNumber = { ...response, phonenumber: data.phonenumber, type: data.type };
         return newNumber;
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error adding number:', error);
-      throw new Error(error.message || 'Failed to add WhatsApp number');
+      console.error(`${t('numbers.errorAddingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToAddWhatsappNumber'));
     }
   };
 
@@ -101,7 +105,7 @@ export const useNumbers = () => {
     try {
       setError(null);
       const numberToUpdate = numbers.find(n => n.phonenumber === phone);
-      if (!numberToUpdate) throw new Error('Number not found');
+      if (!numberToUpdate) throw new Error(t('numbers.numberNotFound'));
       
       const response = await numbersService.read(numberToUpdate.id);
       if (response.success) {
@@ -111,8 +115,8 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error reconnecting number:', error);
-      throw new Error(error.message || 'Failed to reconnect WhatsApp number');
+      console.error(`${t('numbers.errorReconnectingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToReconnectWhatsappNumber'));
     }
   };
 
@@ -126,8 +130,44 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error removing number:', error);
-      throw new Error(error.message || 'Failed to remove WhatsApp number');
+      console.error(`${t('numbers.errorRemovingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToRemoveWhatsappNumber'));
+    }
+  };
+
+  const pairringNumber = async (phone: string) => {
+    try {
+      setError(null);
+      const response = await numbersService.pairring(phone);
+      return response;
+    } catch (err) {
+      const error = err as Error;
+      console.error(`${t('numbers.errorPairingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToPairWhatsappNumber'));
+    }
+  };
+
+  const qrNumber = async (phone: string) => {
+    try {
+      setError(null);
+      const response = await numbersService.qr(phone);
+      return response;
+    } catch (err) {
+      const error = err as Error;
+      console.error(`${t('numbers.errorQrNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToGenerateQrCode'));
+    }
+  };
+
+  const stateNumber = async (phone: string) => {
+    try {
+      setError(null);
+      const response = await numbersService.state(phone);
+      return response;
+    } catch (err) {
+      const error = err as Error;
+      console.error(`${t('numbers.errorStateNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToGetNumberState'));
     }
   };
 
@@ -145,8 +185,8 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error logging out number:', error);
-      throw new Error(error.message || 'Failed to logout WhatsApp number');
+      console.error(`${t('numbers.errorLoggingOutNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToLogoutWhatsappNumber'));
     }
   };
 
@@ -164,8 +204,8 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error stopping number:', error);
-      throw new Error(error.message || 'Failed to stop WhatsApp number');
+      console.error(`${t('numbers.errorStoppingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToStopWhatsappNumber'));
     }
   };
 
@@ -183,8 +223,8 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error pausing number:', error);
-      throw new Error(error.message || 'Failed to pause WhatsApp number');
+      console.error(`${t('numbers.errorPausingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToPauseWhatsappNumber'));
     }
   };
 
@@ -202,8 +242,8 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error resuming number:', error);
-      throw new Error(error.message || 'Failed to resume WhatsApp number');
+      console.error(`${t('numbers.errorResumingNumber')}:`, error);
+      throw new Error(error.message || t('numbers.failedToResumeWhatsappNumber'));
     }
   };
 
@@ -221,8 +261,8 @@ export const useNumbers = () => {
       }
     } catch (err) {
       const error = err as Error;
-      console.error('Error getting number status:', error);
-      throw new Error(error.message || 'Failed to get WhatsApp number status');
+      console.error(`${t('numbers.errorGettingNumberStatus')}:`, error);
+      throw new Error(error.message || t('numbers.failedToGetWhatsappNumberStatus'));
     }
   };
 
@@ -238,5 +278,8 @@ export const useNumbers = () => {
     pauseNumber,
     resumeNumber,
     statusNumber,
+    stateNumber,
+    pairringNumber,
+    qrNumber,
   };
 };

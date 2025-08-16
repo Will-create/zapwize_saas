@@ -1,15 +1,11 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { Bell, Moon, Globe, Shield, Lock, Eye, Mail } from 'lucide-react';
+import { Bell, Mail, Shield, Eye } from 'lucide-react';
 import Toast from '../components/ui/Toast';
 
 const SettingsPage = () => {
-  const { t, i18n } = useTranslation();
-  const [toast, setToast] = useState<{
-    show: boolean;
-    message: string;
-    type: 'success' | 'error';
-  }>({
+  const { t, i18n } = useTranslation('settings');
+  const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
     show: false,
     message: '',
     type: 'success',
@@ -25,10 +21,9 @@ const SettingsPage = () => {
   });
 
   const handleSave = () => {
-    // In a real app, this would save to the backend
     setToast({
       show: true,
-      message: 'Settings saved successfully',
+      message: t('settings.toastSaved'),
       type: 'success',
     });
   };
@@ -41,131 +36,119 @@ const SettingsPage = () => {
   return (
     <div>
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">{t('settings.account')}</h1>
-        <p className="text-gray-600 mt-1">Manage your account settings and preferences</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('settings.accountTitle')}</h1>
+        <p className="text-gray-600 mt-1">{t('settings.accountDescription')}</p>
       </div>
 
       <div className="space-y-6">
-        {/* Display Settings */}
+        {/* Display */}
         <section className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Display</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">{t('settings.displayTitle')}</h2>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Theme
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.displayTheme')}</label>
                 <select
                   value={settings.theme}
                   onChange={(e) => setSettings({ ...settings, theme: e.target.value })}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
                 >
-                  <option value="light">Light</option>
-                  <option value="dark">Dark</option>
-                  <option value="system">System</option>
+                  <option value="light">{t('settings.displayLight')}</option>
+                  <option value="dark">{t('settings.displayDark')}</option>
+                  <option value="system">{t('settings.displaySystem')}</option>
                 </select>
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Language
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('settings.displayLanguage')}</label>
                 <select
                   value={settings.language}
                   onChange={(e) => handleLanguageChange(e.target.value)}
                   className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
                 >
-                  <option value="en">English</option>
-                  <option value="fr">Français</option>
+                  <option value="en">{t('settings.displayEnglish')}</option>
+                  <option value="fr">{t('settings.displayFrench')}</option>
                 </select>
               </div>
             </div>
           </div>
         </section>
 
-        {/* Notification Settings */}
+        {/* Notifications */}
         <section className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Notifications</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">{t('settings.notificationsTitle')}</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Mail size={20} className="text-gray-400 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Email Notifications</p>
-                    <p className="text-xs text-gray-500">Receive email updates about your account</p>
+                    <p className="text-sm font-medium text-gray-700">{t('settings.notificationsEmail')}</p>
+                    <p className="text-xs text-gray-500">{t('settings.notificationsEmailDesc')}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={settings.emailNotifications}
-                    onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.emailNotifications}
+                  onChange={(e) => setSettings({ ...settings, emailNotifications: e.target.checked })}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Bell size={20} className="text-gray-400 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Push Notifications</p>
-                    <p className="text-xs text-gray-500">Receive push notifications in your browser</p>
+                    <p className="text-sm font-medium text-gray-700">{t('settings.notificationsPush')}</p>
+                    <p className="text-xs text-gray-500">{t('settings.notificationsPushDesc')}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={settings.pushNotifications}
-                    onChange={(e) => setSettings({ ...settings, pushNotifications: e.target.checked })}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.pushNotifications}
+                  onChange={(e) => setSettings({ ...settings, pushNotifications: e.target.checked })}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
               </div>
             </div>
           </div>
         </section>
 
-        {/* Security Settings */}
+        {/* Security */}
         <section className="bg-white rounded-lg shadow overflow-hidden">
           <div className="p-6">
-            <h2 className="text-lg font-medium text-gray-900 mb-4">Security</h2>
+            <h2 className="text-lg font-medium text-gray-900 mb-4">{t('settings.securityTitle')}</h2>
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Shield size={20} className="text-gray-400 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Two-Factor Authentication</p>
-                    <p className="text-xs text-gray-500">Add an extra layer of security to your account</p>
+                    <p className="text-sm font-medium text-gray-700">{t('settings.securityTwoFactor')}</p>
+                    <p className="text-xs text-gray-500">{t('settings.securityTwoFactorDesc')}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={settings.twoFactorAuth}
-                    onChange={(e) => setSettings({ ...settings, twoFactorAuth: e.target.checked })}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.twoFactorAuth}
+                  onChange={(e) => setSettings({ ...settings, twoFactorAuth: e.target.checked })}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
               </div>
 
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <Eye size={20} className="text-gray-400 mr-3" />
                   <div>
-                    <p className="text-sm font-medium text-gray-700">Data Collection</p>
-                    <p className="text-xs text-gray-500">Help us improve by sharing usage data</p>
+                    <p className="text-sm font-medium text-gray-700">{t('settings.securityDataCollection')}</p>
+                    <p className="text-xs text-gray-500">{t('settings.securityDataCollectionDesc')}</p>
                   </div>
                 </div>
-                <div className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={settings.dataCollection}
-                    onChange={(e) => setSettings({ ...settings, dataCollection: e.target.checked })}
-                    className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                  />
-                </div>
+                <input
+                  type="checkbox"
+                  checked={settings.dataCollection}
+                  onChange={(e) => setSettings({ ...settings, dataCollection: e.target.checked })}
+                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
+                />
               </div>
             </div>
           </div>
@@ -177,17 +160,12 @@ const SettingsPage = () => {
             onClick={handleSave}
             className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
           >
-            Save Changes
+            {t('settings.save')}
           </button>
         </div>
       </div>
 
-      <Toast
-        show={toast.show}
-        message={toast.message}
-        type={toast.type}
-        onClose={() => setToast({ ...toast, show: false })}
-      />
+      <Toast show={toast.show} message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, show: false })} />
     </div>
   );
 };

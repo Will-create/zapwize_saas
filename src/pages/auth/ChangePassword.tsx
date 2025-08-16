@@ -2,8 +2,11 @@ import { useState, FormEvent } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Lock, Eye, EyeOff } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ChangePassword = () => {
+  const { t } = useTranslation('changePassword');
+
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -12,6 +15,7 @@ const ChangePassword = () => {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+
   const { updatePassword } = useAuth();
   const navigate = useNavigate();
 
@@ -20,12 +24,12 @@ const ChangePassword = () => {
     setError(null);
 
     if (newPassword !== confirmPassword) {
-      setError("New passwords don't match");
+      setError(t('changePassword.passwordsMismatchError'));
       return;
     }
 
     if (newPassword.length < 8) {
-      setError('New password must be at least 8 characters long');
+      setError(t('changePassword.passwordTooShortError'));
       return;
     }
 
@@ -33,7 +37,7 @@ const ChangePassword = () => {
 
     try {
       await updatePassword(currentPassword, newPassword);
-      navigate('/profile', { state: { message: 'Password updated successfully' } });
+      navigate('/profile', { state: { message: t('changePassword.passwordUpdatedSuccess') } });
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -44,8 +48,8 @@ const ChangePassword = () => {
   return (
     <div className="max-w-4xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-900">Change Password</h1>
-        <p className="text-gray-600 mt-1">Update your account password</p>
+        <h1 className="text-2xl font-bold text-gray-900">{t('changePassword.pageTitle')}</h1>
+        <p className="text-gray-600 mt-1">{t('changePassword.pageDescription')}</p>
       </div>
 
       <div className="bg-white rounded-lg shadow overflow-hidden">
@@ -60,7 +64,7 @@ const ChangePassword = () => {
             {/* Current Password */}
             <div>
               <label htmlFor="currentPassword" className="block text-sm font-medium text-gray-700">
-                Current Password
+                {t('changePassword.currentPasswordLabel')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -85,7 +89,7 @@ const ChangePassword = () => {
             {/* New Password */}
             <div>
               <label htmlFor="newPassword" className="block text-sm font-medium text-gray-700">
-                New Password
+                {t('changePassword.newPasswordLabel')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -110,7 +114,7 @@ const ChangePassword = () => {
             {/* Confirm New Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm New Password
+                {t('changePassword.confirmPasswordLabel')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -145,10 +149,10 @@ const ChangePassword = () => {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                   </svg>
-                  Updating...
+                  {t('changePassword.updatingButton')}
                 </span>
               ) : (
-                'Update Password'
+                t('changePassword.updateButton')
               )}
             </button>
           </div>

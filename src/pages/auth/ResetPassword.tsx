@@ -2,8 +2,10 @@ import { useState, FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Mail, ArrowLeft, Smartphone } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const ResetPassword = () => {
+  const { t } = useTranslation('resetPassword');
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,10 +37,10 @@ const ResetPassword = () => {
             </div>
           </div>
           <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-            Check your email
+            {t('resetPassword.checkEmailTitle')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            We've sent a password reset link to {email}
+            {t('resetPassword.checkEmailDescription', { email })}
           </p>
           <div className="mt-6 text-center">
             <Link
@@ -46,7 +48,7 @@ const ResetPassword = () => {
               className="inline-flex items-center text-sm font-medium text-green-600 hover:text-green-500"
             >
               <ArrowLeft size={16} className="mr-1" />
-              Back to login
+              {t('resetPassword.backToLogin')}
             </Link>
           </div>
         </div>
@@ -63,10 +65,10 @@ const ResetPassword = () => {
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          Reset your password
+          {t('resetPassword.resetPasswordTitle')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
-          Enter your email address and we'll send you a link to reset your password
+          {t('resetPassword.resetPasswordDescription')}
         </p>
       </div>
 
@@ -81,7 +83,7 @@ const ResetPassword = () => {
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('resetPassword.emailAddress')}
               </label>
               <div className="mt-1">
                 <input
@@ -109,10 +111,10 @@ const ResetPassword = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Sending...
+                    {t('resetPassword.sending')}
                   </span>
                 ) : (
-                  'Send reset link'
+                  t('resetPassword.sendResetLink')
                 )}
               </button>
             </div>
@@ -122,7 +124,7 @@ const ResetPassword = () => {
                 to="/login"
                 className="text-sm font-medium text-green-600 hover:text-green-500"
               >
-                Back to login
+                {t('resetPassword.backToLogin')}
               </Link>
             </div>
           </form>

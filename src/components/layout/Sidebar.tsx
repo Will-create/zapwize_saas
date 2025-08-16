@@ -22,10 +22,10 @@ const navItems = {
     { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard', exact: true },
     { path: '/dashboard/numbers', icon: <Smartphone size={20} />, label: 'Numbers' },
     { path: '/dashboard/ai-bot', icon: <Bot size={20} />, label: 'AI Bot' },
+    { path: '/dashboard/campaigns', icon: <Puzzle size={20} />, label: 'Campaigns' }
   ],
   // comingSoon: [
   //   { path: '/dashboard/chats', icon: <MessageCircle size={20} />, label: 'Chats' },
-  //   { path: '/dashboard/campaigns', icon: <Puzzle size={20} />, label: 'Campaigns' },
   //   { path: '/dashboard/templates', icon: <MessageSquare size={20} />, label: 'Templates' },
   // ],
   settings: [

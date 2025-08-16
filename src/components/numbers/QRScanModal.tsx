@@ -2,11 +2,17 @@ import { useState, useEffect, useCallback } from 'react';
 import { X, RefreshCw, Check, AlertCircle } from 'lucide-react';
 import { QRCodeSVG as QRCode } from 'qrcode.react';
 import Button from '../ui/Button';
+import { useNumbers } from '../../hooks/useNumbers';
 
 export type ConnectionData = {
   phone: string;
   baseurl: string;
+  token: string;
+  userid: string;
+  name?: string; // For QR code or pairing code
   value?: string; // QR code data or pairing code
+  webhook: string;
+  status: string;
   type: 'qrcode' | 'code';
 };
 
@@ -18,7 +24,7 @@ type QRScanModalProps = {
   onError?: (error: string) => void;
 };
 
-type ConnectionState = 'connecting' | 'waiting' | 'connected' | 'expired' | 'error';
+type ConnectionState = 'connecting' | 'connecting' | 'connected' | 'expired' | 'error';
 
 const QRScanModal = ({ 
   isOpen, 
@@ -36,6 +42,7 @@ const QRScanModal = ({
 
   const isQRCode = connectionData.type === 'qrcode';
   const maxTime = isQRCode ? 30 : 360; // 30 seconds for QR, 6 minutes for pairing
+  const { pairringNumber, qrNumber, stateNumber } = useNumbers();
 
   // Initialize timer based on connection type
   useEffect(() => {
@@ -51,14 +58,14 @@ const QRScanModal = ({
         } else {
           setPairingCode(connectionData.value);
         }
-        setConnectionState('waiting');
+        setConnectionState('connecting');
       }
     }
   }, [isOpen, connectionData, isQRCode, maxTime]);
 
   // Countdown timer
   useEffect(() => {
-    if (!isOpen || connectionState !== 'waiting') return;
+    if (!isOpen || connectionState !== 'connecting') return;
 
     const timer = setInterval(() => {
       setTimeLeft((prev) => {
@@ -76,7 +83,7 @@ const QRScanModal = ({
 
   // Auto-refresh QR code every 30 seconds
   useEffect(() => {
-    if (!isOpen || !isQRCode || connectionState !== 'waiting') return;
+    if (!isOpen || !isQRCode || connectionState !== 'connecting') return;
 
     const refreshInterval = setInterval(() => {
       refreshConnection();
@@ -87,28 +94,17 @@ const QRScanModal = ({
 
   // Poll for connection status
   useEffect(() => {
-    if (!isOpen || connectionState !== 'waiting') return;
+    if (!isOpen || connectionState !== 'connecting') return;
 
     const pollInterval = setInterval(async () => {
       try {
-        const response = await fetch(`${connectionData.baseurl}/api/instances/${connectionData.phone}`, {
-          method: 'GET',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
-
-        if (response.ok) {
-          const data = await response.json();
-          if (data.state === 'open' || data.state === 'connected') {
-            setConnectionState('connected');
-            clearInterval(pollInterval);
-            
-            // Show success message briefly then call onSuccess
-            setTimeout(() => {
-              onSuccess();
-            }, 2000);
-          }
+        const response = await stateNumber(connectionData.phone.replace('+', ''));
+        if (response.value === 'open' || response.value === 'connected') {
+          setConnectionState('connected');
+          clearInterval(pollInterval);
+          setTimeout(() => {
+            onSuccess();
+          }, 2000);
         }
       } catch (error) {
         console.error('Error polling connection status:', error);
@@ -126,30 +122,19 @@ const QRScanModal = ({
 
     try {
       const endpoint = isQRCode 
-        ? `${connectionData.baseurl}/api/instances/${connectionData.phone}/qr`
-        : `${connectionData.baseurl}/api/instances/${connectionData.phone}/pairing`;
+        ? `/api/instances/${connectionData.phone.replace('+', '')}/qr`
+        : `/api/instances/${connectionData.phone.replace('+', '')}/pairing`;
 
-      const response = await fetch(endpoint, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to refresh: ${response.statusText}`);
-      }
-
-      const data = await response.json();
+      const response = isQRCode ? await qrNumber(connectionData.phone.replace('+', '')) : await pairingNumber(connectionData.phone.replace('+', ''), connectionData.value);
       
-      if (data.value) {
+      if (response.value) {
         if (isQRCode) {
-          setQrCodeData(data.value);
+          setQrCodeData(response.value);
         } else {
-          setPairingCode(data.value);
+          setPairingCode(response.value);
         }
         setTimeLeft(maxTime);
-        setConnectionState('waiting');
+        setConnectionState('connecting');
       } else {
         throw new Error('No connection data received');
       }
@@ -276,7 +261,7 @@ const QRScanModal = ({
                   {renderQRCode()}
                 </div>
                 
-                {connectionState === 'waiting' && timeLeft > 0 && (
+                {connectionState === 'connecting' && timeLeft > 0 && (
                   <p className="text-sm text-gray-500 mb-3">
                     QR code expires in <span className="font-medium">{timeLeft}</span> seconds
                   </p>
@@ -302,7 +287,7 @@ const QRScanModal = ({
                   {renderPairingCode()}
                 </div>
                 
-                {connectionState === 'waiting' && (
+                {connectionState === 'connecting' && (
                   <p className="text-sm text-gray-500 mb-3">
                     Code expires in <span className="font-medium">{formatTime(timeLeft)}</span>
                   </p>

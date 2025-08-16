@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useApiKeys } from '../hooks/useApiKeys';
 import { useNumbers } from '../hooks/useNumbers';
+import { useTranslation } from 'react-i18next';
 import { Plus, Search, Copy, Trash2, Key, X } from 'lucide-react';
 import Button from '../components/ui/Button';
 import Toast from '../components/ui/Toast';
@@ -29,16 +30,17 @@ const ApiKeysPage = () => {
   
   const { apiKeys, createApiKey, revokeApiKey } = useApiKeys();
   const { numbers } = useNumbers();
+  const { t } = useTranslation();
   
   // Filter API keys based on search query
   const filteredApiKeys = apiKeys.filter(key => 
     key.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    key.linkedNumber.toLowerCase().includes(searchQuery.toLowerCase())
+    key.numberid.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const handleCopyToClipboard = (value: string) => {
     navigator.clipboard.writeText(value).then(() => {
-      showToast('API Key copied to clipboard', 'success');
+      showToast(t('apikey.copiedToClipboard'), 'success');
     });
   };
 
@@ -51,10 +53,10 @@ const ApiKeysPage = () => {
     if (selectedKeyId) {
       try {
         await revokeApiKey(selectedKeyId);
-        showToast('API Key revoked successfully', 'success');
+        showToast(t('apikey.apiKeyRevokedSuccess'), 'success');
       } catch (error) {
         const err = error as Error;
-        showToast(err.message || 'Failed to revoke API Key', 'error');
+        showToast(err.message || t('apikey.failedToRevokeApiKey'), 'error');
       }
     }
     setIsConfirmModalOpen(false);
@@ -81,12 +83,12 @@ const ApiKeysPage = () => {
     let isValid = true;
 
     if (!name.trim()) {
-      errors.name = 'Name is required';
+      errors.name = t('apikey.nameRequired');
       isValid = false;
     }
 
     if (!numberId) {
-      errors.numberId = 'Please select a WhatsApp number';
+      errors.numberId = t('apikey.selectWhatsAppNumber');
       isValid = false;
     }
 
@@ -109,7 +111,7 @@ const ApiKeysPage = () => {
         permissions: ['send_messages', 'receive_messages'] // Default permissions for MVP
       });
       
-      showToast('API Key created successfully', 'success');
+      showToast(t('apikey.apiKeyCreatedSuccess'), 'success');
       setIsCreatePanelOpen(false);
       
       // Reset form
@@ -118,11 +120,11 @@ const ApiKeysPage = () => {
       
       // Copy the new key to clipboard
       if (newKey) {
-        handleCopyToClipboard(newKey.key);
+        handleCopyToClipboard(newKey.value);
       }
     } catch (error) {
       const err = error as Error;
-      setFormErrors({ general: err.message || 'An unexpected error occurred.' });
+      setFormErrors({ general: err.message || t('apikey.unexpectedError') });
     } finally {
       setIsLoading(false);
     }
@@ -138,8 +140,8 @@ const ApiKeysPage = () => {
     <div className="flex h-full">
       <div className={`flex-1 ${isCreatePanelOpen ? 'mr-80' : ''}`}>
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">API Keys</h1>
-          <p className="text-gray-600 mt-1">Create and manage API keys for your WhatsApp numbers</p>
+          <h1 className="text-2xl font-bold text-gray-900">{t('apikey.apiKeys')}</h1>
+          <p className="text-gray-600 mt-1">{t('apikey.apiKeysDescription')}</p>
         </div>
 
         {/* Action bar */}
@@ -150,7 +152,7 @@ const ApiKeysPage = () => {
             </div>
             <input
               type="text"
-              placeholder="Search API keys..."
+              placeholder={t('apikey.searchApiKeys')}
               className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -164,7 +166,7 @@ const ApiKeysPage = () => {
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
           >
             <Plus size={16} className="mr-2" />
-            Create New API Key
+            {t('apikey.createNewApiKey')}
           </Button>
         </div>
 
@@ -173,12 +175,12 @@ const ApiKeysPage = () => {
           <div className="bg-white rounded-lg shadow p-6 text-center">
             {searchQuery ? (
               <div>
-                <p className="text-gray-500 mb-2">No results found for "{searchQuery}"</p>
+                <p className="text-gray-500 mb-2">{t('apikey.noResultsFound', { query: searchQuery })}</p>
                 <Button 
                   onClick={() => setSearchQuery('')}
                   className="text-green-600 hover:text-green-700 text-sm font-medium"
                 >
-                  Clear search
+                  {t('apikey.clearSearch')}
                 </Button>
               </div>
             ) : (
@@ -186,9 +188,9 @@ const ApiKeysPage = () => {
                 <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 text-green-600 mb-4">
                   <Key size={32} />
                 </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No API keys created yet</h3>
+                <h3 className="text-lg font-medium text-gray-900 mb-2">{t('apikey.noApiKeysYet')}</h3>
                 <p className="text-gray-500 mb-6 max-w-md mx-auto">
-                  Create an API key to authenticate your applications and access the Zapwize API.
+                  {t('apikey.noApiKeysDescription')}
                 </p>
                 <Button
                   onClick={() => {
@@ -198,7 +200,7 @@ const ApiKeysPage = () => {
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
                 >
                   <Plus size={16} className="mr-2" />
-                  Create New API Key
+                  {t('apikey.createNewApiKey')}
                 </Button>
               </div>
             )}
@@ -210,19 +212,19 @@ const ApiKeysPage = () => {
                 <thead className="bg-gray-50">
                   <tr>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Key Name
+                      {t('apikey.keyName')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Linked Number
+                      {t('apikey.linkedNumber')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Created At
+                      {t('apikey.createdAt')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      API Key
+                      {t('apikey.apiKey')}
                     </th>
                     <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      Actions
+                      {t('apikey.actions')}
                     </th>
                   </tr>
                 </thead>
@@ -233,18 +235,18 @@ const ApiKeysPage = () => {
                         <div className="text-sm font-medium text-gray-900">{apiKey.name}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{apiKey.linkedNumber}</div>
+                        <div className="text-sm text-gray-500">{apiKey.numberid}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-500">{new Date(apiKey.createdAt).toLocaleDateString()}</div>
+                        <div className="text-sm text-gray-500">{apiKey.dtcreated}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="text-sm text-gray-900 font-mono bg-gray-100 p-1 rounded flex items-center">
-                          <span className="truncate w-24">{apiKey.key}</span>
+                          <span className="truncate w-24">{apiKey.value}</span>
                           <Button 
-                            onClick={() => handleCopyToClipboard(apiKey.key)}
+                            onClick={() => handleCopyToClipboard(apiKey.value)}
                             className="ml-2 text-gray-500 hover:text-gray-700"
-                            title="Copy API Key"
+                            title={t('apikey.copyApiKey')}
                           >
                             <Copy size={14} />
                           </Button>
@@ -252,11 +254,11 @@ const ApiKeysPage = () => {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <Button 
-                          onClick={() => handleRevokeClick(apiKey.id)}
+                          onClick={() => apiKey.id && handleRevokeClick(apiKey.id)}
                           className="text-red-600 hover:text-red-900 flex items-center justify-end"
                         >
                           <Trash2 size={16} className="mr-1" />
-                          Revoke
+                          {t('apikey.revoke')}
                         </Button>
                       </td>
                     </tr>
@@ -273,7 +275,7 @@ const ApiKeysPage = () => {
         <div className="fixed inset-y-0 right-0 w-80 bg-white shadow-xl z-20 border-l border-gray-200 overflow-y-auto">
           <div className="p-6">
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-lg font-medium text-gray-900">Create API Key</h2>
+              <h2 className="text-lg font-medium text-gray-900">{t('apikey.createApiKey')}</h2>
               <button
                 onClick={() => setIsCreatePanelOpen(false)}
                 className="text-gray-400 hover:text-gray-500"
@@ -292,12 +294,12 @@ const ApiKeysPage = () => {
               {/* Name field */}
               <div>
                 <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                  Key Name
+                  {t('apikey.keyName')}
                 </label>
                 <input
                   type="text"
                   id="name"
-                  placeholder="e.g., Shopify Bot API Key"
+                  placeholder={t('apikey.keyNamePlaceholder')}
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className={`mt-1 block w-full px-3 py-2 border ${
@@ -312,13 +314,13 @@ const ApiKeysPage = () => {
               {/* WhatsApp Number Select */}
               <div>
                 <label htmlFor="numberId" className="block text-sm font-medium text-gray-700">
-                  WhatsApp Number
+                  {t('apikey.whatsappNumber')}
                 </label>
                 
                 {numbers.length === 0 ? (
                   <div className="mt-1 p-2 bg-gray-50 border border-gray-300 rounded-md">
                     <p className="text-sm text-gray-500">
-                      No WhatsApp numbers available. Please link a number first.
+                      {t('apikey.noWhatsappNumbers')}
                     </p>
                   </div>
                 ) : (
@@ -331,7 +333,7 @@ const ApiKeysPage = () => {
                         formErrors.numberId ? 'border-red-300' : 'border-gray-300'
                       } focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md`}
                     >
-                      <option value="">Select a WhatsApp number</option>
+                      <option value="">{t('apikey.selectWhatsAppNumber')}</option>
                       {numbers.map((number) => (
                         <option key={number.id} value={number.id}>
                           {number.name} ({number.phonenumber})
@@ -351,7 +353,7 @@ const ApiKeysPage = () => {
                   className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-colors duration-200"
                   disabled={isLoading}
                 >
-                  {isLoading ? 'Creating...' : 'Create API Key'}
+                  {isLoading ? t('apikey.creating') : t('apikey.createApiKey')}
                 </Button>
               </div>
             </div>
@@ -365,9 +367,9 @@ const ApiKeysPage = () => {
           isOpen={isConfirmModalOpen}
           onClose={() => setIsConfirmModalOpen(false)}
           onConfirm={confirmRevoke}
-          title="Revoke API Key"
-          message="Are you sure you want to revoke this API key? This action cannot be undone and any applications using this key will no longer be able to access the API."
-          confirmText="Revoke Key"
+          title={t('apikey.revokeApiKey')}
+          message={t('apikey.revokeApiKeyConfirmation')}
+          confirmText={t('apikey.revokeKey')}
           confirmButtonClass="bg-red-600 hover:bg-red-700"
         />
       )}

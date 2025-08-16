@@ -3,13 +3,17 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Eye, EyeOff, Smartphone, ArrowLeft } from 'lucide-react';
 import { useAlertStore } from '../../store/alertStore';
+import { useTranslation } from 'react-i18next';
 
 const Login = () => {
+  const { t } = useTranslation('login');
+
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+
   const { login } = useAuth();
   const navigate = useNavigate();
   const { show: showAlert } = useAlertStore();
@@ -23,7 +27,7 @@ const Login = () => {
       await login(email, password);
       navigate('/dashboard');
     } catch (err: any) {
-      const errorMessage = err.message || 'Failed to login. Please check your credentials.';
+      const errorMessage = err.message || t('login.loginFailed');
       setError(errorMessage);
       showAlert(errorMessage, 'error');
     } finally {
@@ -36,7 +40,7 @@ const Login = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" className="flex justify-center mb-6 text-gray-500 hover:text-gray-700">
           <ArrowLeft size={20} className="mr-2" />
-          Back to Homepage
+          {t('login.backToHomepage')}
         </Link>
         <div className="flex justify-center">
           <div className="h-12 w-12 bg-green-500 text-white flex items-center justify-center rounded-lg">
@@ -44,12 +48,12 @@ const Login = () => {
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          Sign in to your account
+          {t('login.signInTitle')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{' '}
           <Link to="/register" className="font-medium text-green-600 hover:text-green-500">
-            create a new account
+            {t('login.createAccount')}
           </Link>
         </p>
       </div>
@@ -73,7 +77,7 @@ const Login = () => {
 
           <form className="space-y-6" onSubmit={handleSubmit}>
             <div>
-              <label htmlFor="email" className="sr-only">Email address</label>
+              <label htmlFor="email" className="sr-only">{t('login.emailPlaceholder')}</label>
               <input
                 id="email"
                 name="email"
@@ -83,12 +87,12 @@ const Login = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                placeholder="Email address"
+                placeholder={t('login.emailPlaceholder')}
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="sr-only">Password</label>
+              <label htmlFor="password" className="sr-only">{t('login.passwordPlaceholder')}</label>
               <div className="mt-1 relative">
                 <input
                   id="password"
@@ -99,7 +103,7 @@ const Login = () => {
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="appearance-none block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm"
-                  placeholder="Password"
+                  placeholder={t('login.passwordPlaceholder')}
                 />
                 <button
                   type="button"
@@ -120,13 +124,13 @@ const Login = () => {
                   className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
                 />
                 <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
+                  {t('login.rememberMe')}
                 </label>
               </div>
 
               <div className="text-sm">
                 <Link to="/reset-password" className="font-medium text-green-600 hover:text-green-500">
-                  Forgot your password?
+                  {t('login.forgotPassword')}
                 </Link>
               </div>
             </div>
@@ -145,10 +149,10 @@ const Login = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Signing in...
+                    {t('login.signingInButton')}
                   </span>
                 ) : (
-                  'Sign in'
+                  t('login.signInButton')
                 )}
               </button>
             </div>

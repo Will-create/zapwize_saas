@@ -16,6 +16,9 @@ const Register = lazy(() => import('./pages/auth/Register' /* webpackChunkName: 
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword' /* webpackChunkName: "auth" */));
 const VerifyAccount = lazy(() => import('./pages/auth/VerifyAccount' /* webpackChunkName: "auth" */));
 const ChangePassword = lazy(() => import('./pages/auth/ChangePassword' /* webpackChunkName: "auth" */));
+// pages/DocsReference
+const ApiDocsPage = lazy(() => import('./pages/ApiDocsPage' /* webpackChunkName: "docs-reference" */));
+
 
 const MainLayout = lazy(() => import('./components/layout/MainLayout' /* webpackChunkName: "layout" */));
 const DashboardPage = lazy(() => import('./pages/DashboardPage' /* webpackChunkName: "dashboard" */));
@@ -68,6 +71,7 @@ function App() {
                 <Route path="ai-bot" element={<AIBotPage />} />
                 <Route path="api-keys" element={<ApiKeysPage />} />
                 <Route path="documentation" element={<DocumentationPage />} />
+                <Route path="documentation/api" element={<ApiDocsPage />} />
                 <Route path="billing" element={<BillingPage />} />
                 <Route path="billing/payment" element={<PaymentPage />} />
                 <Route path="settings" element={<SettingsPage />} />

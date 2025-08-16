@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { CheckCircle, XCircle, Loader } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 const VerifyAccount = () => {
+  const { t } = useTranslation('verifyAccount');
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { verifyAccount } = useAuth();
@@ -11,11 +13,11 @@ const VerifyAccount = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const token = searchParams.get('token');
+    const token = searchParams.get('verifyAccount.token');
     
     if (!token) {
       setStatus('error');
-      setError('Invalid verification link');
+      setError(t('verifyAccount.invalidToken'));
       return;
     }
 
@@ -23,7 +25,6 @@ const VerifyAccount = () => {
       try {
         await verifyAccount(token);
         setStatus('success');
-        // Redirect to login after 3 seconds
         setTimeout(() => {
           navigate('/login');
         }, 3000);
@@ -34,7 +35,7 @@ const VerifyAccount = () => {
     };
 
     verifyToken();
-  }, [searchParams, verifyAccount, navigate]);
+  }, [searchParams, verifyAccount, navigate, t]);
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
@@ -58,21 +59,15 @@ const VerifyAccount = () => {
         </div>
 
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          {status === 'loading' && 'Verifying your account...'}
-          {status === 'success' && 'Account verified!'}
-          {status === 'error' && 'Verification failed'}
+          {status === 'loading' && t('verifyAccount.verifyingTitle')}
+          {status === 'success' && t('verifyAccount.verifiedTitle')}
+          {status === 'error' && t('verifyAccount.errorTitle')}
         </h2>
 
         <div className="mt-2 text-center text-sm text-gray-600">
-          {status === 'loading' && (
-            <p>Please wait while we verify your account</p>
-          )}
+          {status === 'loading' && <p>{t('verifyAccount.verifyingDescription')}</p>}
           {status === 'success' && (
-            <p>
-              Your account has been successfully verified.
-              <br />
-              Redirecting you to login...
-            </p>
+            <p className="whitespace-pre-line">{t('verifyAccount.verifiedDescription')}</p>
           )}
           {status === 'error' && error && (
             <p className="text-red-600">{error}</p>

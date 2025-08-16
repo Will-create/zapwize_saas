@@ -2,8 +2,11 @@ import { useState, FormEvent } from 'react';
 import { Eye, EyeOff, Smartphone, CheckCircle, XCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const Register = () => {
+  const { t } = useTranslation('register');
+
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -14,21 +17,14 @@ const Register = () => {
   const { register } = useAuth();
   const navigate = useNavigate();
 
-  // Calculate password strength
   const getPasswordStrength = () => {
     if (!password) return 0;
-    
     let strength = 0;
-    
-    // Length check
     if (password.length >= 8) strength += 1;
-    
-    // Character variety checks
     if (/[A-Z]/.test(password)) strength += 1;
     if (/[a-z]/.test(password)) strength += 1;
     if (/[0-9]/.test(password)) strength += 1;
     if (/[^A-Za-z0-9]/.test(password)) strength += 1;
-    
     return strength;
   };
 
@@ -45,21 +41,20 @@ const Register = () => {
     setFormError(null);
     setIsLoading(true);
 
-    // Validation
     if (!name || !email || !password || !confirmPassword) {
-      setFormError('Please fill in all fields');
+      setFormError(t('register.fillAllFields'));
       setIsLoading(false);
       return;
     }
 
     if (password !== confirmPassword) {
-      setFormError('Passwords do not match');
+      setFormError(t('register.passwordsDontMatch'));
       setIsLoading(false);
       return;
     }
 
     if (passwordStrength < 3) {
-      setFormError('Please use a stronger password');
+      setFormError(t('register.passwordTooWeak'));
       setIsLoading(false);
       return;
     }
@@ -68,7 +63,7 @@ const Register = () => {
       await register(name, email, password);
       navigate('/dashboard');
     } catch (error: any) {
-      setFormError(error.message || 'Registration failed. Please try again.');
+      setFormError(error.message || t('register.registrationFailed'));
     } finally {
       setIsLoading(false);
     }
@@ -79,7 +74,7 @@ const Register = () => {
       <div className="sm:mx-auto sm:w-full sm:max-w-md">
         <Link to="/" className="flex justify-center mb-6 text-gray-500 hover:text-gray-700">
           <ArrowLeft size={20} className="mr-2" />
-          Back to Homepage
+          {t('register.backToHomepage')}
         </Link>
         <div className="flex justify-center">
           <div className="h-12 w-12 bg-green-500 text-white flex items-center justify-center rounded-lg">
@@ -87,12 +82,12 @@ const Register = () => {
           </div>
         </div>
         <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-          Create your account
+          {t('register.createAccountTitle')}
         </h2>
         <p className="mt-2 text-center text-sm text-gray-600">
           Or{' '}
           <Link to="/login" className="font-medium text-green-600 hover:text-green-500">
-            sign in to your existing account
+            {t('register.signInLink')}
           </Link>
         </p>
       </div>
@@ -106,9 +101,10 @@ const Register = () => {
           )}
 
           <form className="space-y-6" onSubmit={handleSubmit}>
+            {/* Name */}
             <div>
               <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                Full Name
+                {t('register.fullName')}
               </label>
               <div className="mt-1">
                 <input
@@ -123,9 +119,10 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Email */}
             <div>
               <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
+                {t('register.emailAddress')}
               </label>
               <div className="mt-1">
                 <input
@@ -141,9 +138,10 @@ const Register = () => {
               </div>
             </div>
 
+            {/* Password */}
             <div>
               <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Password
+                {t('register.password')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -163,8 +161,7 @@ const Register = () => {
                   {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
                 </button>
               </div>
-              
-              {/* Password strength indicator */}
+
               {password && (
                 <div className="mt-2">
                   <div className="h-1 w-full bg-gray-200 rounded overflow-hidden">
@@ -174,44 +171,32 @@ const Register = () => {
                     ></div>
                   </div>
                   <p className="mt-1 text-xs text-gray-500">
-                    {passwordStrength <= 1 && 'Weak password'}
-                    {passwordStrength > 1 && passwordStrength <= 3 && 'Moderate password'}
-                    {passwordStrength > 3 && 'Strong password'}
+                    {passwordStrength <= 1 && t('register.passwordStrengthWeak')}
+                    {passwordStrength > 1 && passwordStrength <= 3 && t('register.passwordStrengthModerate')}
+                    {passwordStrength > 3 && t('register.passwordStrengthStrong')}
                   </p>
-                  
                   <ul className="mt-2 space-y-1 text-xs text-gray-600">
                     <li className="flex items-center">
-                      {password.length >= 8 ? (
-                        <CheckCircle size={12} className="text-green-500 mr-1" />
-                      ) : (
-                        <XCircle size={12} className="text-gray-400 mr-1" />
-                      )}
-                      At least 8 characters
+                      {password.length >= 8 ? <CheckCircle size={12} className="text-green-500 mr-1" /> : <XCircle size={12} className="text-gray-400 mr-1" />}
+                      {t('register.passwordRequirementLength')}
                     </li>
                     <li className="flex items-center">
-                      {/[A-Z]/.test(password) ? (
-                        <CheckCircle size={12} className="text-green-500 mr-1" />
-                      ) : (
-                        <XCircle size={12} className="text-gray-400 mr-1" />
-                      )}
-                      Contains uppercase letter
+                      {/[A-Z]/.test(password) ? <CheckCircle size={12} className="text-green-500 mr-1" /> : <XCircle size={12} className="text-gray-400 mr-1" />}
+                      {t('register.passwordRequirementUppercase')}
                     </li>
                     <li className="flex items-center">
-                      {/[0-9]/.test(password) ? (
-                        <CheckCircle size={12} className="text-green-500 mr-1" />
-                      ) : (
-                        <XCircle size={12} className="text-gray-400 mr-1" />
-                      )}
-                      Contains number
+                      {/[0-9]/.test(password) ? <CheckCircle size={12} className="text-green-500 mr-1" /> : <XCircle size={12} className="text-gray-400 mr-1" />}
+                      {t('register.passwordRequirementNumber')}
                     </li>
                   </ul>
                 </div>
               )}
             </div>
 
+            {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Confirm Password
+                {t('register.confirmPassword')}
               </label>
               <div className="mt-1 relative">
                 <input
@@ -229,12 +214,12 @@ const Register = () => {
                   {password === confirmPassword ? (
                     <span className="text-green-500 flex items-center">
                       <CheckCircle size={12} className="mr-1" />
-                      Passwords match
+                      {t('register.passwordsMatch')}
                     </span>
                   ) : (
                     <span className="text-red-500 flex items-center">
                       <XCircle size={12} className="mr-1" />
-                      Passwords don't match
+                      {t('register.passwordsDontMatch')}
                     </span>
                   )}
                 </p>
@@ -253,10 +238,10 @@ const Register = () => {
                       <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
                       <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                     </svg>
-                    Creating account...
+                    {t('register.creatingAccount')}
                   </span>
                 ) : (
-                  'Create account'
+                  t('register.createAccountButton')
                 )}
               </button>
             </div>
