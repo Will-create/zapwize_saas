@@ -915,6 +915,14 @@ export default {
       }
     }
   },
+  cliAuth: {
+    title: "Authentification CLI",
+    verifying: "Vérification de votre identité...",
+    success: "Authentification réussie !",
+    failed: "Échec de l'authentification",
+    returnToTerminal: "Vous pouvez maintenant retourner à votre terminal.",
+    invalidRequest: "Demande d'authentification invalide ou expirée. Veuillez réessayer.",
+  },
   addNumber: {
     "title": "Ajouter un nouveau numéro WhatsApp",
     "loading": {

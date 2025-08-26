@@ -14,9 +14,7 @@ export const useCliAuth = () => {
   useEffect(() => {
     const params = new URLSearchParams(location.search);
     const stateParam = params.get('state');
-    const timestamp = params.get('timestamp'); // optional
 
-    // Save state in localStorage if present
     if (stateParam) {
       localStorage.setItem('pendingCliState', stateParam);
     }
@@ -24,36 +22,32 @@ export const useCliAuth = () => {
     const pendingState = localStorage.getItem('pendingCliState');
 
     if (!pendingState) {
-      setError('Missing state parameter');
+      setError('Missing state parameter. Please initiate the authentication process from the CLI again.');
       setStatus('error');
       return;
     }
 
     const verify = async () => {
       try {
-        // 1. Check if user has valid session
         const response = await cliAuthService.getProfile();
+        const profile = response.value;
 
-        let profile = response.value;
-        console.log('Profile picture: ', profile);
         if (!profile || !profile.id) {
-          // Not logged in → redirect to login
           navigate('/login');
           return;
         }
 
-        // 2. Approve CLI auth
         const result = await cliAuthService.approve(pendingState);
 
         if (result?.success || result?.status === 'approved') {
           setStatus('success');
           localStorage.removeItem('pendingCliState');
         } else {
-          setError('Approval failed');
+          setError(result?.message || 'Approval failed. Please try again.');
           setStatus('error');
         }
       } catch (err: any) {
-        setError(err?.message || 'Authentication failed');
+        setError(err?.message || 'An unexpected error occurred during authentication. Please try again.');
         setStatus('error');
       }
     };
