@@ -4,6 +4,26 @@ export default {
   theme: {
     extend: {
       colors: {
+        primary: {
+          DEFAULT: "#16a34a",
+          foreground: "#ffffff",
+        },
+        secondary: {
+          DEFAULT: "#f4f4f5",
+          foreground: "#18181b",
+        },
+        destructive: {
+          DEFAULT: "#ef4444",
+          foreground: "#ffffff",
+        },
+        muted: {
+          DEFAULT: "#f4f4f5",
+          foreground: "#71717a",
+        },
+        accent: {
+          DEFAULT: "#f4f4f5",
+          foreground: "#18181b",
+        },
         green: {
           50: '#f0fdf5',
           100: '#dcfce7',

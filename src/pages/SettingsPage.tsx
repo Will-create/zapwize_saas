@@ -1,24 +1,42 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Bell, Mail, Shield, Eye } from 'lucide-react';
 import Toast from '../components/ui/Toast';
+import Button from '../components/ui/Button';
+import TwoFactorAuthModal from './auth/TwoFactorAuthModal';
+import { authService } from '../services/api';
 
 const SettingsPage = () => {
-  const { t, i18n } = useTranslation('settings');
+  const { t, i18n } = useTranslation();
   const [toast, setToast] = useState<{ show: boolean; message: string; type: 'success' | 'error' }>({
     show: false,
     message: '',
     type: 'success',
   });
+  const [is2faModalOpen, setIs2faModalOpen] = useState(false);
+  const [is2faEnabled, setIs2faEnabled] = useState(false);
 
   const [settings, setSettings] = useState({
     theme: 'light',
     language: i18n.language,
     emailNotifications: true,
     pushNotifications: true,
-    twoFactorAuth: false,
     dataCollection: true,
   });
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await authService.getProfile();
+        if (response.success && response.value) {
+          setIs2faEnabled(response.value.two_factor_enabled);
+        }
+      } catch (error) {
+        console.error("Failed to fetch profile", error);
+      }
+    };
+    fetchProfile();
+  }, []);
 
   const handleSave = () => {
     setToast({
@@ -31,6 +49,11 @@ const SettingsPage = () => {
   const handleLanguageChange = (lang: string) => {
     i18n.changeLanguage(lang);
     setSettings({ ...settings, language: lang });
+  };
+
+  const handle2faSuccess = () => {
+    setIs2faEnabled(true);
+    setToast({ show: true, message: '2FA enabled successfully!', type: 'success' });
   };
 
   return (
@@ -127,12 +150,9 @@ const SettingsPage = () => {
                     <p className="text-xs text-gray-500">{t('settings.securityTwoFactorDesc')}</p>
                   </div>
                 </div>
-                <input
-                  type="checkbox"
-                  checked={settings.twoFactorAuth}
-                  onChange={(e) => setSettings({ ...settings, twoFactorAuth: e.target.checked })}
-                  className="h-4 w-4 text-green-600 focus:ring-green-500 border-gray-300 rounded"
-                />
+                <Button onClick={() => setIs2faModalOpen(true)} disabled={is2faEnabled}>
+                  {is2faEnabled ? t('settings.twoFactorEnabled') : t('settings.enableTwoFactor')}
+                </Button>
               </div>
 
               <div className="flex items-center justify-between">
@@ -156,16 +176,18 @@ const SettingsPage = () => {
 
         {/* Save Button */}
         <div className="flex justify-end">
-          <button
-            onClick={handleSave}
-            className="inline-flex justify-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
-          >
+          <Button onClick={handleSave}>
             {t('settings.save')}
-          </button>
+          </Button>
         </div>
       </div>
 
       <Toast show={toast.show} message={toast.message} type={toast.type} onClose={() => setToast({ ...toast, show: false })} />
+      <TwoFactorAuthModal
+        isOpen={is2faModalOpen}
+        onClose={() => setIs2faModalOpen(false)}
+        onSuccess={handle2faSuccess}
+      />
     </div>
   );
 };

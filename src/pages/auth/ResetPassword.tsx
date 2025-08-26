@@ -5,7 +5,7 @@ import { Mail, ArrowLeft, Smartphone } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const ResetPassword = () => {
-  const { t } = useTranslation('resetPassword');
+  const { t } = useTranslation();
   const [email, setEmail] = useState('');
   const [isSubmitted, setIsSubmitted] = useState(false);
   const [error, setError] = useState<string | null>(null);

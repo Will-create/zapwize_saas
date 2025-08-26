@@ -5,7 +5,7 @@ import { CheckCircle, XCircle, Loader } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const VerifyAccount = () => {
-  const { t } = useTranslation('verifyAccount');
+  const { t } = useTranslation();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { verifyAccount } = useAuth();

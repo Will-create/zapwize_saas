@@ -16,6 +16,7 @@ const Register = lazy(() => import('./pages/auth/Register' /* webpackChunkName: 
 const ResetPassword = lazy(() => import('./pages/auth/ResetPassword' /* webpackChunkName: "auth" */));
 const VerifyAccount = lazy(() => import('./pages/auth/VerifyAccount' /* webpackChunkName: "auth" */));
 const ChangePassword = lazy(() => import('./pages/auth/ChangePassword' /* webpackChunkName: "auth" */));
+const CliAuthPage = lazy(() => import('./pages/auth/CliAuthPage' /* webpackChunkName: "auth" */));
 // pages/DocsReference
 const ApiDocsPage = lazy(() => import('./pages/ApiDocsPage' /* webpackChunkName: "docs-reference" */));
 
@@ -33,8 +34,9 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage' /* webpackChunkName:
 const NotificationsPage = lazy(() => import('./pages/NotificationsPage' /* webpackChunkName: "notifications" */));
 const PaymentPage = lazy(() => import('./pages/PaymentPage' /* webpackChunkName: "payment" */));
 // const TemplatesPage = lazy(() => import('./pages/TemplatesPage' /* webpackChunkName: "templates" */));
-const UsersPage = lazy(() => import('./pages/UsersPage' /* webpackChunkName: "users" */));
-const AIBotPage = lazy(() => import('./pages/AIBotPage' /* webpackChunkName: "ai-bot" */));
+// const UsersPage = lazy(() => import('./pages/UsersPage' /* webpackChunkName: "users" */));
+const AgentsPage = lazy(() => import('./pages/AgentsPage' /* webpackChunkName: "agents" */));
+const EditAgentPage = lazy(() => import('./pages/EditAgent/EditAgentPage' /* webpackChunkName: "agents" */));
 
 // Auth context
 import { AuthProvider } from './context/AuthContext';
@@ -53,6 +55,7 @@ function App() {
               <Route path="/register" element={<Register />} />
               <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/verify-account" element={<VerifyAccount />} />
+              <Route path="/cli-auth" element={<CliAuthPage />} />
               
               {/* Dashboard routes - wrapped in MainLayout */}
               <Route
@@ -68,7 +71,8 @@ function App() {
                 <Route path="numbers" element={<NumbersPage />} />
                 {/* <Route path="campaigns" element={<CampaignsPage />} /> */}
                 {/* <Route path="templates" element={<TemplatesPage />} /> */}
-                <Route path="ai-bot" element={<AIBotPage />} />
+                <Route path="agents" element={<AgentsPage />} />
+                <Route path="agents/:id/edit" element={<EditAgentPage />} />
                 <Route path="api-keys" element={<ApiKeysPage />} />
                 <Route path="documentation" element={<DocumentationPage />} />
                 <Route path="documentation/api" element={<ApiDocsPage />} />
@@ -78,7 +82,7 @@ function App() {
                 <Route path="profile" element={<ProfilePage />} />
                 <Route path="profile/change-password" element={<ChangePassword />} />
                 <Route path="notifications" element={<NotificationsPage />} />
-                <Route path="users" element={<UsersPage />} />
+                {/* <Route path="users" element={<UsersPage />} /> */}
               </Route>
               
               {/* Fallback route */}

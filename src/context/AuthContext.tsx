@@ -86,8 +86,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (firstItem.token) {
           localStorage.setItem('token', firstItem.token);
           setUser(firstItem.user || { email });
-          return firstItem;
         }
+        return firstItem;
       } 
       // Handle object response format
       else if (response && response.token) {
@@ -96,7 +96,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return response;
       }
       
-      throw new Error('Invalid login response');
+      return response;
     } catch (error) {
       console.error('Login error:', error);
       throw error;

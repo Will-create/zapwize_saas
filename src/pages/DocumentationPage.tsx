@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next';
 import { FileText, ExternalLink, Book, Code, MessageCircle, HelpCircle } from 'lucide-react';
 
 const DocumentationPage = () => {
-  const { t } = useTranslation('documentation');
+  const { t } = useTranslation();
 
   const cards = [
     {

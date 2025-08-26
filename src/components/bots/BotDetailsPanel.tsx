@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Bot, Trash2, Settings, FileText, BarChart2, AlertCircle } from 'lucide-react';
+import { Trash2, FileText } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import ConfirmationModal from '../ui/ConfirmationModal';
 
 type BotDetailsPanelProps = {
@@ -28,6 +29,7 @@ type BotDetailsPanelProps = {
 };
 
 const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'overview' | 'settings' | 'knowledge'>('overview');
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
@@ -49,7 +51,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
             onClick={onClose}
             className="text-gray-400 hover:text-gray-500"
           >
-            <span className="sr-only">Close panel</span>
+            <span className="sr-only">{t('botPanel.closePanel')}</span>
             ×
           </button>
         </div>
@@ -59,7 +61,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
             bot.status === 'inactive' ? 'bg-gray-100 text-gray-800' :
             'bg-yellow-100 text-yellow-800'
           }`}>
-            {bot.status}
+            {t(`status.${bot.status}`)}
           </span>
           <span className="text-sm text-gray-500">•</span>
           <span className="text-sm text-gray-500">{bot.whatsappNumber}</span>
@@ -77,7 +79,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Overview
+            {t('botPanel.tabs.overview')}
           </button>
           <button
             onClick={() => setActiveTab('knowledge')}
@@ -87,7 +89,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Knowledge Base
+            {t('botPanel.tabs.knowledge')}
           </button>
           <button
             onClick={() => setActiveTab('settings')}
@@ -97,7 +99,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
                 : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
             }`}
           >
-            Settings
+            {t('botPanel.tabs.settings')}
           </button>
         </nav>
       </div>
@@ -109,13 +111,13 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4">
               <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="text-sm font-medium text-gray-500">Messages</div>
+                <div className="text-sm font-medium text-gray-500">{t('botPanel.overview.messages')}</div>
                 <div className="mt-1 text-2xl font-semibold text-gray-900">
                   {bot.messageCount.toLocaleString()}
                 </div>
               </div>
               <div className="bg-gray-50 p-4 rounded-lg">
-                <div className="text-sm font-medium text-gray-500">Success Rate</div>
+                <div className="text-sm font-medium text-gray-500">{t('botPanel.overview.successRate')}</div>
                 <div className="mt-1 text-2xl font-semibold text-gray-900">
                   {bot.successRate}%
                 </div>
@@ -124,14 +126,14 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
 
             {/* Token Usage */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Token Usage</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">{t('botPanel.overview.tokenUsage')}</h3>
               <div className="bg-gray-50 p-4 rounded-lg">
                 <div className="flex justify-between mb-1">
                   <span className="text-sm text-gray-500">
                     {bot.tokenUsage.remaining.toLocaleString()} / {bot.tokenUsage.total.toLocaleString()}
                   </span>
                   <span className="text-sm text-gray-500">
-                    Resets on {new Date(bot.tokenUsage.resetDate).toLocaleDateString()}
+                    {t('botPanel.overview.resetsOn', { date: new Date(bot.tokenUsage.resetDate).toLocaleDateString() })}
                   </span>
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
@@ -147,14 +149,14 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
 
             {/* Quick Actions */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-2">Quick Actions</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-2">{t('botPanel.overview.quickActions')}</h3>
               <div className="space-y-2">
                 <button
                   onClick={() => setShowDeleteConfirm(true)}
                   className="w-full flex items-center justify-center px-4 py-2 border border-red-300 rounded-md shadow-sm text-sm font-medium text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
                 >
                   <Trash2 size={16} className="mr-2" />
-                  Delete Bot
+                  {t('botPanel.actions.deleteBot')}
                 </button>
               </div>
             </div>
@@ -188,7 +190,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
               <button
                 className="w-full flex items-center justify-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500"
               >
-                Upload Document
+                {t('botPanel.actions.uploadDocument')}
               </button>
             </div>
           </div>
@@ -198,10 +200,10 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
           <div className="space-y-6">
             {/* LLM Settings */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-4">Language Model Settings</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-4">{t('botPanel.settings.languageModel')}</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Provider</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('botPanel.settings.provider')}</label>
                   <select className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
                     <option>OpenAI</option>
                     <option>DeepInfra</option>
@@ -210,7 +212,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Model</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('botPanel.settings.model')}</label>
                   <select className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
                     <option>gpt-4</option>
                     <option>gpt-3.5-turbo</option>
@@ -218,7 +220,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Max Tokens</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('botPanel.settings.maxTokens')}</label>
                   <input
                     type="number"
                     className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md"
@@ -230,10 +232,10 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
 
             {/* Image Generation Settings */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-4">Image Generation</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-4">{t('botPanel.settings.imageGeneration')}</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Model</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('botPanel.settings.model')}</label>
                   <select className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
                     <option>DALL-E 3</option>
                     <option>Stable Diffusion</option>
@@ -244,10 +246,10 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
 
             {/* Audio Settings */}
             <div>
-              <h3 className="text-sm font-medium text-gray-700 mb-4">Audio Processing</h3>
+              <h3 className="text-sm font-medium text-gray-700 mb-4">{t('botPanel.settings.audioProcessing')}</h3>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Speech-to-Text Model</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('botPanel.settings.speechToText')}</label>
                   <select className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
                     <option>Whisper</option>
                     <option>Custom Model</option>
@@ -255,7 +257,7 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700">Text-to-Speech Model</label>
+                  <label className="block text-sm font-medium text-gray-700">{t('botPanel.settings.textToSpeech')}</label>
                   <select className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md">
                     <option>OpenAI TTS</option>
                     <option>ElevenLabs</option>
@@ -275,9 +277,9 @@ const BotDetailsPanel = ({ bot, onClose, onDelete }: BotDetailsPanelProps) => {
           onDelete(bot.id);
           onClose();
         }}
-        title="Delete Bot"
-        message="Are you sure you want to delete this bot? This action cannot be undone and all associated data will be permanently deleted."
-        confirmText="Delete Bot"
+        title={t('botPanel.modal.deleteTitle')}
+        message={t('botPanel.modal.deleteMessage')}
+        confirmText={t('botPanel.modal.confirm')}
         confirmButtonClass="bg-red-600 hover:bg-red-700"
       />
     </div>

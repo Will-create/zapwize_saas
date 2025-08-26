@@ -4,6 +4,7 @@ import { useNumbers, WhatsAppNumber } from '../../hooks/useNumbers';
 import Badge from '../ui/Badge';
 import Toast from '../ui/Toast';
 import Button from '../ui/Button';
+import { useTranslation } from 'react-i18next';
 
 interface NumberDetailsModalProps {
   isOpen: boolean;
@@ -12,6 +13,7 @@ interface NumberDetailsModalProps {
 }
 
 const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, number }) => {
+  const { t } = useTranslation();
   const { pauseNumber, resumeNumber, statusNumber, logoutNumber } = useNumbers();
   const [isPaused, setIsPaused] = useState(number.status === 'paused');
   const [isLoading, setIsLoading] = useState(false);
@@ -31,14 +33,14 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
         const error = err as Error;
         setToast({
           show: true,
-          message: `Status update failed: ${error.message}`,
+          message: `${t('readNumber.errors.statusUpdateFailed')}: ${error.message}`,
           type: 'error',
         });
       });
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [number.id, statusNumber]);
+  }, [number.id, statusNumber, t]);
 
   const handleTogglePause = async () => {
     setIsLoading(true);
@@ -53,14 +55,14 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
       setIsPaused(!isPaused);
       setToast({
         show: true,
-        message: `Operation successful: ${JSON.stringify(response)}`,
+        message: t('readNumber.success.operation', { response: JSON.stringify(response) }),
         type: 'success',
       });
     } catch (err) {
       const error = err as Error;
       setToast({
         show: true,
-        message: error.message || 'Operation failed',
+        message: error.message || t('readNumber.errors.operationFailed'),
         type: 'error',
       });
     } finally {
@@ -74,7 +76,7 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
       const response = await logoutNumber(number.id);
       setToast({
         show: true,
-        message: `Logout successful: ${JSON.stringify(response)}`,
+        message: t('readNumber.success.logout', { response: JSON.stringify(response) }),
         type: 'success',
       });
       onClose();
@@ -82,7 +84,7 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
       const error = err as Error;
       setToast({
         show: true,
-        message: error.message || 'Logout failed',
+        message: error.message || t('readNumber.errors.logoutFailed'),
         type: 'error',
       });
     } finally {
@@ -96,27 +98,27 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
       <div className="bg-white rounded-lg shadow-xl p-6 w-full max-w-md">
         <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Number Details</h2>
+          <h2 className="text-xl font-bold">{t('readNumber.title')}</h2>
           <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
             <X size={24} />
           </button>
         </div>
         <div className="space-y-4">
           <div>
-            <p className="text-sm font-medium text-gray-500">Name</p>
+            <p className="text-sm font-medium text-gray-500">{t('readNumber.labels.name')}</p>
             <p className="text-lg text-gray-900">{number.name}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Phone Number</p>
+            <p className="text-sm font-medium text-gray-500">{t('readNumber.labels.phoneNumber')}</p>
             <p className="text-lg text-gray-900">{number.phonenumber}</p>
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Status</p>
+            <p className="text-sm font-medium text-gray-500">{t('readNumber.labels.status')}</p>
             <Badge status={number.status} />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-500">Webhook URL</p>
-            <p className="text-lg text-gray-900 break-all">{number.webhook || 'Not set'}</p>
+            <p className="text-sm font-medium text-gray-500">{t('readNumber.labels.webhook')}</p>
+            <p className="text-lg text-gray-900 break-all">{number.webhook || t('readNumber.labels.notSet')}</p>
           </div>
         </div>
         <div className="mt-6 flex justify-end space-x-3">
@@ -126,7 +128,7 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
             isLoading={isLoading}
           >
             {isPaused ? <Play size={16} className="mr-2" /> : <Pause size={16} className="mr-2" />}
-            {isPaused ? 'Resume' : 'Pause'}
+            {isPaused ? t('readNumber.actions.resume') : t('readNumber.actions.pause')}
           </Button>
           <Button
             onClick={handleLogout}
@@ -134,7 +136,7 @@ const NumberDetailsModal: FC<NumberDetailsModalProps> = ({ isOpen, onClose, numb
             isLoading={isLoading}
           >
             <Power size={16} className="mr-2" />
-            Logout
+            {t('readNumber.actions.logout')}
           </Button>
         </div>
       </div>

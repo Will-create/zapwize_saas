@@ -1,5 +1,6 @@
 import { useState, FormEvent } from 'react';
-import { X, QrCode, KeyRound, RefreshCw } from 'lucide-react';
+import { X, RefreshCw } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import Button from '../ui/Button';
 
 type AddNumberFormData = {
@@ -18,6 +19,7 @@ type AddNumberModalProps = {
 };
 
 const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNumberModalProps) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [phonenumber, setPhonenumber] = useState('');
   const [webhook, setWebhook] = useState('');
@@ -30,47 +32,40 @@ const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNum
   }>({});
 
   const validateForm = () => {
-    const newErrors: {
-      name?: string;
-      phonenumber?: string;
-      webhook?: string;
-    } = {};
+    const newErrors: { name?: string; phonenumber?: string; webhook?: string } = {};
     let isValid = true;
 
-    // Name validation
     if (!name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('addNumber.errors.nameRequired');
       isValid = false;
     } else if (name.trim().length < 2) {
-      newErrors.name = 'Name must be at least 2 characters';
+      newErrors.name = t('addNumber.errors.nameTooShort');
       isValid = false;
     } else if (name.trim().length > 50) {
-      newErrors.name = 'Name must be less than 50 characters';
+      newErrors.name = t('addNumber.errors.nameTooLong');
       isValid = false;
     }
 
-    // Phone number validation - simplified format (e.g., 22656920671)
     if (!phonenumber.trim()) {
-      newErrors.phonenumber = 'Phone number is required';
+      newErrors.phonenumber = t('addNumber.errors.phoneRequired');
       isValid = false;
     } else {
-      const cleanPhone = phonenumber.replace(/\D/g, ''); // remove non-digit characters
+      const cleanPhone = phonenumber.replace(/\D/g, '');
       if (!/^\d{11,15}$/.test(cleanPhone)) {
-        newErrors.phonenumber = 'Enter a valid phone number starting with country code (e.g., 22656920671)';
+        newErrors.phonenumber = t('addNumber.errors.phoneInvalid');
         isValid = false;
       }
     }
 
-    // Webhook URL validation
     if (webhook.trim()) {
       try {
         const url = new URL(webhook.trim());
         if (!['http:', 'https:'].includes(url.protocol)) {
-          newErrors.webhook = 'URL must use HTTP or HTTPS protocol';
+          newErrors.webhook = t('addNumber.errors.urlInvalid');
           isValid = false;
         }
       } catch {
-        newErrors.webhook = 'Enter a valid URL (e.g., https://example.com/webhook)';
+        newErrors.webhook = t('addNumber.errors.urlInvalid');
         isValid = false;
       }
     }
@@ -79,78 +74,44 @@ const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNum
     return isValid;
   };
 
-  const formatPhoneNumber = (value: string) => {
-    // Remove all non-digit characters except +
-    let cleaned = value.replace(/[^\d+]/g, '');
-    
-    // Ensure it starts with +
-    if (!cleaned.startsWith('+')) {
-      cleaned = '+' + cleaned;
-    }
-    
-    // Add space after country code (rough approximation)
-    if (cleaned.length > 4) {
-      const countryCode = cleaned.substring(0, 4);
-      const rest = cleaned.substring(4);
-      cleaned = countryCode + ' ' + rest;
-    }
-    
-    return cleaned;
-  };
-
-  const handlePhonenumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhoneNumber(e.target.value);
-    setPhonenumber(formatted);
-  };
-
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
-    
-    // Clear previous errors
     setErrors({});
-    
-    if (!validateForm()) {
-      return;
-    }
+    if (!validateForm()) return;
 
     try {
       await onSubmit({
         name: name.trim(),
-        phonenumber: phonenumber.replace(/\s+/g, ''), // Remove spaces for API
+        phonenumber: phonenumber.replace(/\s+/g, ''),
         webhook: webhook.trim(),
         type
       });
-      
-      // Reset form on successful submission
       setName('');
       setPhonenumber('');
       setWebhook('');
       setType('qrcode');
       setErrors({});
     } catch (error: any) {
-      let errorMessage = typeof(error) == 'string' ? error: null;
-      
-      if (!errorMessage)
-        errorMessage = error.response?.data?.error || 
-                         (Array.isArray(error) && error[0]?.error) || 
-                         (error instanceof Error ? error.message : 'An unexpected error occurred');
-      setErrors({
-        general: `Failed to create number: ${errorMessage}`
-      });
+      let errorMessage =
+        typeof error == 'string'
+          ? error
+          : error.response?.data?.error ||
+            (Array.isArray(error) && error[0]?.error) ||
+            (error instanceof Error ? error.message : t('addNumber.errors.unexpected'));
+
+      setErrors({ general: `${t('addNumber.errors.failed')}: ${errorMessage}` });
     }
   };
 
   const handleClose = () => {
-    if (!isLoading) {
-      onClose();
-    }
+    if (!isLoading) onClose();
   };
 
   if (!isOpen) return null;
 
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
-      <div className="flex items-center justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+      <div className="flex items-center justify-center min-h-screen px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity" aria-hidden="true">
           <div className="absolute inset-0 bg-gray-500 opacity-75"></div>
         </div>
@@ -162,22 +123,18 @@ const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNum
             <div className="p-6 text-center">
               <div className="animate-pulse">
                 <RefreshCw size={48} className="mx-auto text-green-500" />
-                <h3 className="mt-4 text-lg font-medium text-gray-900">Creating Your Number...</h3>
-                <p className="mt-2 text-sm text-gray-600">
-                  This may take a few moments. Please don't close this window.
-                </p>
+                <h3 className="mt-4 text-lg font-medium text-gray-900">{t('addNumber.loading.title')}</h3>
+                <p className="mt-2 text-sm text-gray-600">{t('addNumber.loading.subtitle')}</p>
               </div>
             </div>
           ) : (
             <>
               <div className="flex justify-between items-start p-4 border-b border-gray-200">
-                <h3 className="text-lg font-medium text-gray-900">
-                  Add New WhatsApp Number
-                </h3>
+                <h3 className="text-lg font-medium text-gray-900">{t('addNumber.title')}</h3>
                 <button
                   onClick={handleClose}
                   disabled={isLoading}
-                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="bg-white rounded-md text-gray-400 hover:text-gray-500 disabled:opacity-50"
                 >
                   <X size={20} />
                 </button>
@@ -185,125 +142,107 @@ const AddNumberModal = ({ isOpen, onClose, onSubmit, isLoading = false }: AddNum
 
               <form onSubmit={handleSubmit}>
                 <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-                  {/* General error message */}
                   {errors.general && (
                     <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
                       <p className="text-sm text-red-600">{errors.general}</p>
                     </div>
                   )}
-                  
+
                   <div className="space-y-4">
-                    {/* Name field */}
+                    {/* Name */}
                     <div>
                       <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                        Name <span className="text-red-500">*</span>
+                        {t('addNumber.fields.name')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="text"
                         id="name"
-                        placeholder="e.g., My Business WhatsApp"
+                        placeholder={t('addNumber.placeholders.name')}
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         disabled={isLoading}
                         maxLength={50}
                         className={`mt-1 block w-full px-3 py-2 border ${
                           errors.name ? 'border-red-300' : 'border-gray-300'
-                        } rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500`}
+                        } rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                       />
-                      {errors.name && (
-                        <p className="mt-1 text-sm text-red-600">{errors.name}</p>
-                      )}
+                      {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
                     </div>
 
-                    {/* Phone Number field */}
+                    {/* Phone Number */}
                     <div>
                       <label htmlFor="phonenumber" className="block text-sm font-medium text-gray-700">
-                        Phone Number <span className="text-red-500">*</span>
+                        {t('addNumber.fields.phone')} <span className="text-red-500">*</span>
                       </label>
                       <input
                         type="tel"
                         id="phonenumber"
-                        placeholder="+226 12345678"
+                        placeholder={t('addNumber.placeholders.phone')}
                         value={phonenumber}
-                        onChange={handlePhonenumberChange}
+                        onChange={(e) => setPhonenumber(e.target.value)}
                         disabled={isLoading}
                         className={`mt-1 block w-full px-3 py-2 border ${
                           errors.phonenumber ? 'border-red-300' : 'border-gray-300'
-                        } rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500`}
+                        } rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                       />
                       {errors.phonenumber ? (
                         <p className="mt-1 text-sm text-red-600">{errors.phonenumber}</p>
                       ) : (
-                        <p className="mt-1 text-xs text-gray-500">
-                          Enter in international format with country code (e.g., 22612345678)
-                        </p>
+                        <p className="mt-1 text-xs text-gray-500">{t('addNumber.help.phone')}</p>
                       )}
                     </div>
 
-                    {/* Connection Type */}
+                    {/* Connection Method */}
                     <div>
                       <label htmlFor="connection-type" className="block text-sm font-medium text-gray-700">
-                        Connection Method
+                        {t('addNumber.fields.connection')}
                       </label>
                       <select
                         id="connection-type"
                         value={type}
                         onChange={(e) => setType(e.target.value as 'code' | 'qrcode')}
                         disabled={isLoading}
-                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md disabled:bg-gray-50"
+                        className="mt-1 block w-full pl-3 pr-10 py-2 border-gray-300 rounded-md focus:ring-green-500"
                       >
-                        <option value="qrcode">QR Code</option>
-                        <option value="code">Pairing Code</option>
+                        <option value="qrcode">{t('addNumber.options.qrcode')}</option>
+                        <option value="code">{t('addNumber.options.code')}</option>
                       </select>
                       <p className="mt-1 text-xs text-gray-500">
-                        {type === 'qrcode' 
-                          ? 'Scan QR code with WhatsApp camera' 
-                          : 'Send confirmation code via WhatsApp'}
+                        {type === 'qrcode' ? t('addNumber.help.qrcode') : t('addNumber.help.code')}
                       </p>
                     </div>
 
-                    {/* Webhook URL field */}
+                    {/* Webhook */}
                     <div>
                       <label htmlFor="webhook" className="block text-sm font-medium text-gray-700">
-                        Webhook URL (Optional)
+                        {t('addNumber.fields.webhook')}
                       </label>
                       <input
                         type="url"
                         id="webhook"
-                        placeholder="https://example.com/webhook"
+                        placeholder={t('addNumber.placeholders.webhook')}
                         value={webhook}
                         onChange={(e) => setWebhook(e.target.value)}
                         disabled={isLoading}
                         className={`mt-1 block w-full px-3 py-2 border ${
                           errors.webhook ? 'border-red-300' : 'border-gray-300'
-                        } rounded-md shadow-sm focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm disabled:bg-gray-50 disabled:text-gray-500`}
+                        } rounded-md shadow-sm focus:ring-green-500 focus:border-green-500 sm:text-sm`}
                       />
                       {errors.webhook ? (
                         <p className="mt-1 text-sm text-red-600">{errors.webhook}</p>
                       ) : (
-                        <p className="mt-1 text-xs text-gray-500">
-                          URL where we'll send notifications when your WhatsApp number receives messages
-                        </p>
+                        <p className="mt-1 text-xs text-gray-500">{t('addNumber.help.webhook')}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
                 <div className="px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse border-t border-gray-200">
-                  <Button
-                    type="submit"
-                    isLoading={isLoading}
-                    className="w-full inline-flex justify-center items-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Continue
+                  <Button type="submit" isLoading={isLoading} className="bg-green-600 text-white">
+                    {t('addNumber.actions.continue')}
                   </Button>
-                  <Button
-                    type="button"
-                    onClick={handleClose}
-                    disabled={isLoading}
-                    className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    Cancel
+                  <Button type="button" onClick={handleClose} disabled={isLoading} className="bg-white text-gray-700">
+                    {t('addNumber.actions.cancel')}
                   </Button>
                 </div>
               </form>

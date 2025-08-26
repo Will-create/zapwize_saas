@@ -4,10 +4,12 @@ import Sidebar from './Sidebar';
 import TopBar from './TopBar';
 import { useAuth } from '../../context/AuthContext';
 import GlobalAlertBanner from '../ui/GlobalAlertBanner';
+import { useTranslation } from 'react-i18next';
 
 const MainLayout = () => {
   const { isAuthenticated, isLoading } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -42,13 +44,13 @@ const MainLayout = () => {
         <footer className="bg-white border-t border-gray-200 p-4">
           <div className="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center text-sm text-gray-500">
             <div className="mb-2 sm:mb-0">
-              &copy; {new Date().getFullYear()} Zapwize. All rights reserved.
+              &copy; {new Date().getFullYear()} Zapwize. {t('mainlayout.footer.rights')}
             </div>
             <div className="flex space-x-4">
-              <Link to="/" className="hover:text-gray-900">Home</Link>
-              <Link to="/documentation" className="hover:text-gray-900">Documentation</Link>
-              <Link to="/terms" className="hover:text-gray-900">Terms</Link>
-              <Link to="/privacy" className="hover:text-gray-900">Privacy</Link>
+              <Link to="/" className="hover:text-gray-900">{t('mainlayout.footer.home')}</Link>
+              <Link to="/documentation" className="hover:text-gray-900">{t('mainlayout.footer.documentation')}</Link>
+              <Link to="/terms" className="hover:text-gray-900">{t('mainlayout.footer.terms')}</Link>
+              <Link to="/privacy" className="hover:text-gray-900">{t('mainlayout.footer.privacy')}</Link>
             </div>
           </div>
         </footer>

@@ -31,7 +31,6 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
     if (file) {
       onSendMessage('', type, file);
     }
-    // Reset input
     e.target.value = '';
   };
 
@@ -41,7 +40,7 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
   };
 
   return (
-    <div className="bg-white border-t border-gray-200 p-4">
+    <div className="bg-white border-t border-gray-200 p-2 sm:p-4">
       <div className="relative">
         {showEmojiPicker && (
           <div className="absolute bottom-full right-0 mb-2">
@@ -49,20 +48,20 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
           </div>
         )}
         
-        <div className="flex items-center space-x-2">
+        <div className="flex items-center space-x-1 sm:space-x-2">
           <button
             onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-            className="text-gray-500 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100"
+            className="text-gray-500 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100 flex-shrink-0"
           >
             <Smile size={20} />
           </button>
 
-          <div className="relative group">
+          <div className="relative group flex-shrink-0">
             <button className="text-gray-500 hover:text-gray-600 p-2 rounded-full hover:bg-gray-100">
               <Paperclip size={20} />
             </button>
             
-            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block">
+            <div className="absolute bottom-full left-0 mb-2 hidden group-hover:block z-10">
               <div className="bg-white rounded-lg shadow-lg py-2 w-48">
                 <button
                   onClick={() => mediaInputRef.current?.click()}
@@ -89,39 +88,43 @@ const ChatInput = ({ onSendMessage }: ChatInputProps) => {
             </div>
           </div>
 
-          <input
-            type="text"
-            placeholder="Type a message"
-            className="flex-1 border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-            value={message}
-            onChange={(e) => setMessage(e.target.value)}
-            onKeyPress={(e) => {
-              if (e.key === 'Enter' && !e.shiftKey) {
-                e.preventDefault();
-                handleSendMessage();
-              }
-            }}
-          />
+          <div className="flex-1 min-w-0">
+            <input
+              type="text"
+              placeholder="Type a message"
+              className="w-full border border-gray-300 rounded-full px-4 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              onKeyPress={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSendMessage();
+                }
+              }}
+            />
+          </div>
 
-          {message.trim() ? (
-            <button
-              onClick={handleSendMessage}
-              className="text-white bg-green-500 hover:bg-green-600 p-2 rounded-full"
-            >
-              <Send size={20} />
-            </button>
-          ) : (
-            <button
-              onClick={handleVoiceRecord}
-              className={`p-2 rounded-full ${
-                isRecording 
-                  ? 'text-red-500 bg-red-100' 
-                  : 'text-gray-500 hover:text-gray-600 hover:bg-gray-100'
-              }`}
-            >
-              <Mic size={20} />
-            </button>
-          )}
+          <div className="flex-shrink-0">
+            {message.trim() ? (
+              <button
+                onClick={handleSendMessage}
+                className="text-white bg-green-500 hover:bg-green-600 p-2 rounded-full"
+              >
+                <Send size={20} />
+              </button>
+            ) : (
+              <button
+                onClick={handleVoiceRecord}
+                className={`p-2 rounded-full ${
+                  isRecording 
+                    ? 'text-red-500 bg-red-100' 
+                    : 'text-gray-500 hover:text-gray-600 hover:bg-gray-100'
+                }`}
+              >
+                <Mic size={20} />
+              </button>
+            )}
+          </div>
         </div>
 
         {/* Hidden file inputs */}

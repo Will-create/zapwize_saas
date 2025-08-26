@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
+import { useSearchParams } from 'react-router-dom';
 import { useBilling } from '../hooks/useBilling';
 import { CheckCircle, XCircle } from 'lucide-react';
 import { BillingPlan, BillingHistoryItem } from '../hooks/useBilling';
 import OrderSummaryModal from '../components/billing/OrderSummaryModal';
+import StatusDisplayModal from '../components/ui/StatusDisplayModal';
 import { useTranslation } from 'react-i18next';
 import { handleApiError } from '../utils/errorHandler';
 import { useAlertStore } from '../store/alertStore';
@@ -29,28 +30,48 @@ const BillingPage: React.FC = () => {
     updateCouponValidation // Add this
   } = useBilling();
 
-  const location = useLocation();
-  const navigate = useNavigate();
-  const [paymentStatus, setPaymentStatus] = useState<'success' | 'failure' | null>(null);
+  const { show: showAlert } = useAlertStore();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [statusModalInfo, setStatusModalInfo] = useState<{
+    isOpen: boolean;
+    isSuccess: boolean;
+    title: string;
+    message: string;
+  }>({ isOpen: false, isSuccess: true, title: '', message: '' });
+
   const [selectedNumber, setSelectedNumber] = useState<string>('');
   const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('monthly');
-  // Order summary modal state
   const [isOrderModalOpen, setIsOrderModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<BillingPlan | null>(null);
   const [couponCode, setCouponCode] = useState('');
 
-  // Add alert store
-  const { show: showAlert } = useAlertStore();
-
   useEffect(() => {
-    const params = new URLSearchParams(location.search);
-    const status = params.get('status');
-    if (status === 'success' || status === 'failure') {
-      setPaymentStatus(status);
-      navigate(location.pathname, { replace: true });
-      refetchBillingData(selectedNumber);
+    const success = searchParams.get('success');
+    if (success === 'true') {
+      setStatusModalInfo({
+        isOpen: true,
+        isSuccess: true,
+        title: t('agents.paymentSuccessTitle'),
+        message: t('agents.paymentSuccessMessage'),
+      });
+      if (selectedNumber) {
+        refetchBillingData(selectedNumber);
+      }
+    } else if (success === 'false') {
+      setStatusModalInfo({
+        isOpen: true,
+        isSuccess: false,
+        title: t('agents.paymentFailedTitle'),
+        message: t('agents.paymentFailedMessage'),
+      });
     }
-  }, [location, navigate, refetchBillingData, selectedNumber]);
+
+    if (success) {
+      const newSearchParams = new URLSearchParams(searchParams.toString());
+      newSearchParams.delete('success');
+      setSearchParams(newSearchParams, { replace: true });
+    }
+  }, [searchParams, setSearchParams, refetchBillingData, selectedNumber, t]);
 
   useEffect(() => {
     if (linkedNumbers.length > 0 && !selectedNumber) {
@@ -65,7 +86,7 @@ const BillingPage: React.FC = () => {
 
   if (loading) return <div className="flex justify-center items-center h-screen">Loading...</div>;
   if (error) return <div className="text-red-500 text-center p-4">Error: {error.message}</div>;
-
+   
   const refreshOrderSummary = async () => {
     if (selectedPlan && selectedNumber) {
       try {
@@ -164,36 +185,6 @@ const BillingPage: React.FC = () => {
     const cycleText = billingCycle === 'monthly' ? '/month' : '/year';
     return `${price} ${cycleText}`;
   };
-
-  if (paymentStatus) {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-        <div className="bg-white p-8 rounded-lg shadow-md text-center">
-          {paymentStatus === 'success' ? (
-            <CheckCircle className="mx-auto mb-4 text-green-600" size={48} />
-          ) : (
-            <XCircle className="mx-auto mb-4 text-red-500" size={48} />
-          )}
-          <h2 className="text-2xl font-bold mb-2">
-            {paymentStatus === 'success' ? t('billing.paymentSuccessful') : t('billing.paymentFailed')}
-          </h2>
-          <p className="mb-4">
-            {paymentStatus === 'success'
-              ? t('billing.successMessage')
-              : t('billing.failureMessage')}
-          </p>
-          <button
-            className={`px-4 py-2 text-white rounded ${
-              paymentStatus === 'success' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-500 hover:bg-red-600'
-            }`}
-            onClick={() => setPaymentStatus(null)}
-          >
-            {t('billing.goToDashboard')}
-          </button>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -374,6 +365,13 @@ const BillingPage: React.FC = () => {
           }}
         />
       )}
+      <StatusDisplayModal
+        isOpen={statusModalInfo.isOpen}
+        onClose={() => setStatusModalInfo({ ...statusModalInfo, isOpen: false })}
+        isSuccess={statusModalInfo.isSuccess}
+        title={statusModalInfo.title}
+        message={statusModalInfo.message}
+      />
     </div>
   );
 };

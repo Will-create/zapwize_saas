@@ -2,6 +2,7 @@ import { useState, FormEvent } from 'react';
 import { X } from 'lucide-react';
 import { useNumbers } from '../../hooks/useNumbers';
 import Button from '../ui/Button';
+import { useTranslation } from 'react-i18next';
 
 type CreateApiKeyData = {
   name: string;
@@ -16,6 +17,7 @@ type CreateApiKeyModalProps = {
 };
 
 const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps) => {
+  const { t } = useTranslation();
   const [name, setName] = useState('');
   const [numberId, setNumberId] = useState('');
   const [permissions, setPermissions] = useState<string[]>([]);
@@ -46,17 +48,17 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
     let isValid = true;
 
     if (!name.trim()) {
-      newErrors.name = 'Name is required';
+      newErrors.name = t('CreateAPIKEY.errors.nameRequired');
       isValid = false;
     }
 
     if (!numberId) {
-      newErrors.numberId = 'Please select a WhatsApp number';
+      newErrors.numberId = t('CreateAPIKEY.errors.numberRequired');
       isValid = false;
     }
 
     if (permissions.length === 0) {
-      newErrors.permissions = 'Please select at least one permission';
+      newErrors.permissions = t('CreateAPIKEY.errors.permissionRequired');
       isValid = false;
     }
 
@@ -80,14 +82,13 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
         permissions,
       });
       
-      // Reset form on success
       setName('');
       setNumberId('');
       setPermissions([]);
       setErrors({});
     } catch (error) {
-        const err = error as Error;
-      setErrors({ general: err.message || 'An unexpected error occurred.' });
+      const err = error as Error;
+      setErrors({ general: err.message || t('CreateAPIKEY.errors.unexpected') });
     } finally {
       setIsLoading(false);
     }
@@ -96,10 +97,10 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
   if (!isOpen) return null;
 
   const permissionOptions = [
-    { id: 'send_messages', label: 'Send Messages' },
-    { id: 'receive_messages', label: 'Receive Messages' },
-    { id: 'media_access', label: 'Media Access' },
-    { id: 'webhook_events', label: 'Webhook Events' },
+    { id: 'send_messages', label: t('CreateAPIKEY.permissions.sendMessages') },
+    { id: 'receive_messages', label: t('CreateAPIKEY.permissions.receiveMessages') },
+    { id: 'media_access', label: t('CreateAPIKEY.permissions.mediaAccess') },
+    { id: 'webhook_events', label: t('CreateAPIKEY.permissions.webhookEvents') },
   ];
 
   return (
@@ -114,7 +115,7 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
           <div className="flex justify-between items-start p-4 border-b border-gray-200">
             <h3 className="text-lg font-medium text-gray-900">
-              Create New API Key
+              {t('CreateAPIKEY.createApiKey.title')}
             </h3>
             <button
               onClick={onClose}
@@ -126,21 +127,21 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
 
           <form onSubmit={handleSubmit}>
             <div className="px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
-             {errors.general && (
+              {errors.general && (
                 <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-md">
-                    <p className="text-sm text-red-600">{errors.general}</p>
+                  <p className="text-sm text-red-600">{errors.general}</p>
                 </div>
-            )}
+              )}
               <div className="space-y-4">
                 {/* Name field */}
                 <div>
                   <label htmlFor="name" className="block text-sm font-medium text-gray-700">
-                    Key Name
+                    {t('CreateAPIKEY.createApiKey.keyName')}
                   </label>
                   <input
                     type="text"
                     id="name"
-                    placeholder="e.g., Shopify Bot API Key"
+                    placeholder={t('CreateAPIKEY.createApiKey.placeholder')}
                     value={name}
                     onChange={(e) => setName(e.target.value)}
                     className={`mt-1 block w-full px-3 py-2 border ${
@@ -155,13 +156,13 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
                 {/* WhatsApp Number Select */}
                 <div>
                   <label htmlFor="numberId" className="block text-sm font-medium text-gray-700">
-                    WhatsApp Number
+                    {t('CreateAPIKEY.createApiKey.whatsappNumber')}
                   </label>
                   
                   {numbers.length === 0 ? (
                     <div className="mt-1 p-2 bg-gray-50 border border-gray-300 rounded-md">
                       <p className="text-sm text-gray-500">
-                        No WhatsApp numbers available. Please link a number first.
+                        {t('CreateAPIKEY.createApiKey.noNumbers')}
                       </p>
                     </div>
                   ) : (
@@ -174,7 +175,7 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
                           errors.numberId ? 'border-red-300' : 'border-gray-300'
                         } focus:outline-none focus:ring-green-500 focus:border-green-500 sm:text-sm rounded-md`}
                       >
-                        <option value="">Select a WhatsApp number</option>
+                        <option value="">{t('CreateAPIKEY.createApiKey.selectNumber')}</option>
                         {numbers.map((number) => (
                           <option key={number.id} value={number.id}>
                             {number.name} ({number.phonenumber})
@@ -191,7 +192,7 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
                 {/* Permissions */}
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Permissions
+                    {t('CreateAPIKEY.createApiKey.permissions')}
                   </label>
                   
                   <div className="space-y-2">
@@ -229,14 +230,14 @@ const CreateApiKeyModal = ({ isOpen, onClose, onSubmit }: CreateApiKeyModalProps
                 isLoading={isLoading}
                 disabled={numbers.length === 0}
               >
-                Create API Key
+                {t('CreateAPIKEY.createApiKey.submit')}
               </Button>
               <Button
                 type="button"
                 onClick={onClose}
                 className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:mt-0 sm:w-auto sm:text-sm"
               >
-                Cancel
+                {t('CreateAPIKEY.common.cancel')}
               </Button>
             </div>
           </form>

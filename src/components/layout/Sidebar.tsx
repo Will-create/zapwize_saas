@@ -7,7 +7,6 @@ import {
   CreditCard, 
   Menu, 
   X,
-  Puzzle,
   LayoutDashboard,
   MessageSquare,
   MessageCircle,
@@ -15,45 +14,41 @@ import {
   Bot,
   Home
 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 
 // Navigation items grouped by section
-const navItems = {
-  main: [
-    { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: 'Dashboard', exact: true },
-    { path: '/dashboard/numbers', icon: <Smartphone size={20} />, label: 'Numbers' },
-    { path: '/dashboard/ai-bot', icon: <Bot size={20} />, label: 'AI Bot' },
-    { path: '/dashboard/campaigns', icon: <Puzzle size={20} />, label: 'Campaigns' }
-  ],
-  // comingSoon: [
-  //   { path: '/dashboard/chats', icon: <MessageCircle size={20} />, label: 'Chats' },
-  //   { path: '/dashboard/templates', icon: <MessageSquare size={20} />, label: 'Templates' },
-  // ],
-  settings: [
-    { path: '/dashboard/api-keys', icon: <Key size={20} />, label: 'API Keys' },
-    { path: '/dashboard/documentation', icon: <FileText size={20} />, label: 'Documentation' },
-    { path: '/dashboard/billing', icon: <CreditCard size={20} />, label: 'Billing' },
-    { path: '/dashboard/users', icon: <Users size={20} />, label: 'Users' },
-  ],
-};
-
 const Sidebar = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { t } = useTranslation();
+
+  const navItems = {
+    main: [
+      { path: '/dashboard', icon: <LayoutDashboard size={20} />, label: t('sidebar.main.dashboard'), exact: true },
+      { path: '/dashboard/numbers', icon: <Smartphone size={20} />, label: t('sidebar.main.numbers') },
+      { path: '/dashboard/agents', icon: <Users size={20} />, label: t('sidebar.main.agents') },
+    ],
+    settings: [
+      { path: '/dashboard/api-keys', icon: <Key size={20} />, label: t('sidebar.settings.apiKeys') },
+      { path: '/dashboard/documentation', icon: <FileText size={20} />, label: t('sidebar.settings.documentation') },
+      { path: '/dashboard/billing', icon: <CreditCard size={20} />, label: t('sidebar.settings.billing') },
+    ],
+  };
 
   // Toggle mobile menu
   const toggleMobileMenu = () => setIsMobileMenuOpen(!isMobileMenuOpen);
 
   return (
     <>
-      {/* Mobile menu button - only visible on small screens */}
+      {/* Mobile menu button */}
       <button
         className="lg:hidden fixed top-4 left-4 z-20 p-2 rounded-md bg-white shadow-md text-gray-700"
         onClick={toggleMobileMenu}
-        aria-label="Toggle menu"
+        aria-label={t('sidebar.aria.toggleMenu')}
       >
         {isMobileMenuOpen ? <X size={20} /> : <Menu size={20} />}
       </button>
 
-      {/* Sidebar - responsive */}
+      {/* Sidebar */}
       <aside 
         className={`
           bg-white shadow-md z-10
@@ -86,7 +81,7 @@ const Sidebar = () => {
               onClick={() => setIsMobileMenuOpen(false)}
             >
               <span className="mr-3"><Home size={20} /></span>
-              <span>Landing Page</span>
+              <span>{t('sidebar.landingPage')}</span>
             </NavLink>
           </div>
 
@@ -113,36 +108,10 @@ const Sidebar = () => {
             </ul>
           </div>
 
-          {/* Coming Soon Section */}
-          {/* <div className="mb-6">
-            <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Coming Soon
-            </h3>
-            <ul className="space-y-1">
-              {navItems.comingSoon.map((item) => (
-                <li key={item.path}>
-                  <NavLink
-                    to={item.path}
-                    end={item.exact}
-                    className={({ isActive }) => `
-                      flex items-center px-4 py-3 text-gray-700 rounded-lg
-                      hover:bg-gray-100 transition-colors duration-200
-                      ${isActive ? 'bg-green-50 text-green-600 font-medium' : ''}
-                    `}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                  >
-                    <span className="mr-3">{item.icon}</span>
-                    <span>{item.label}</span>
-                  </NavLink>
-                </li>
-              ))}
-            </ul>
-          </div> */}
-
           {/* Settings Section */}
           <div>
             <h3 className="px-4 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-              Settings
+              {t('sidebar.settings.title')}
             </h3>
             <ul className="space-y-1">
               {navItems.settings.map((item) => (
@@ -170,7 +139,7 @@ const Sidebar = () => {
         <div className="p-4 border-t border-gray-100">
           <div className="text-xs text-gray-500">
             <p>&copy; 2025 Zapwize</p>
-            <p>Version 1.0.0</p>
+            <p>{t('sidebar.footer.version', { version: '1.0.0' })}</p>
           </div>
         </div>
       </aside>
@@ -184,6 +153,6 @@ const Sidebar = () => {
       )}
     </>
   );
-}
+};
 
 export default Sidebar;

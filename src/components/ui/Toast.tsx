@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
-import { X, CheckCircle, AlertCircle } from 'lucide-react';
+import { useEffect } from 'react';
+import { X, CheckCircle, AlertCircle, ShieldCheck, ShieldAlert } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 
 type ToastProps = {
   show: boolean;
@@ -9,56 +10,65 @@ type ToastProps = {
   onClose: () => void;
 };
 
-const Toast = ({ show, message, type, duration = 3000, onClose }: ToastProps) => {
-  const [isVisible, setIsVisible] = useState(false);
-
+const Toast = ({ show, message, type, duration = 5000, onClose }: ToastProps) => {
   useEffect(() => {
     if (show) {
-      setIsVisible(true);
-      
-      // Auto close after duration
       const timer = setTimeout(() => {
-        setIsVisible(false);
-        setTimeout(onClose, 300); // Allow for fade out animation
+        onClose();
       }, duration);
-      
       return () => clearTimeout(timer);
-    } else {
-      setIsVisible(false);
     }
   }, [show, duration, onClose]);
 
-  if (!show && !isVisible) return null;
+  const isSuccess = type === 'success';
 
   return (
-    <div 
-      className={`fixed bottom-4 right-4 flex items-center p-4 rounded-lg shadow-lg transition-opacity duration-300 ${
-        isVisible ? 'opacity-100' : 'opacity-0'
-      } ${
-        type === 'success' ? 'bg-green-50 border border-green-200' : 'bg-red-50 border border-red-200'
-      }`}
-      role="alert"
-    >
-      {type === 'success' ? (
-        <CheckCircle size={20} className="text-green-500" />
-      ) : (
-        <AlertCircle size={20} className="text-red-500" />
+    <AnimatePresence>
+      {show && (
+        <motion.div
+          initial={{ opacity: 0, y: 50, scale: 0.3 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: 20, scale: 0.5 }}
+          transition={{
+            type: "spring",
+            stiffness: 260,
+            damping: 20
+          }}
+          className="fixed top-5 right-5 z-50"
+        >
+          <div
+            className={`flex items-center p-4 rounded-lg shadow-2xl border-2 ${
+              isSuccess
+                ? 'bg-gray-900 border-green-500 text-white'
+                : 'bg-gray-900 border-red-500 text-white'
+            }`}
+            role="alert"
+          >
+            <div className="flex-shrink-0">
+              {isSuccess ? (
+                <ShieldCheck size={24} className="text-green-500" />
+              ) : (
+                <ShieldAlert size={24} className="text-red-500" />
+              )}
+            </div>
+            <div className="ml-4 mr-6">
+              <p className="text-sm font-bold uppercase tracking-wider">
+                {isSuccess ? 'Operation Successful' : 'Alert: Operation Failed'}
+              </p>
+              <p className="text-xs text-gray-400">{message}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="ml-auto -mx-1.5 -my-1.5 bg-gray-800 text-gray-500 rounded-lg focus:ring-2 focus:ring-gray-400 p-1.5 hover:bg-gray-700 inline-flex items-center justify-center h-8 w-8"
+              aria-label="Close"
+            >
+              <span className="sr-only">Close</span>
+              <X className="h-5 w-5" />
+            </button>
+          </div>
+        </motion.div>
       )}
-      <div className="ml-3 mr-4 text-sm font-medium text-gray-800">
-        {message}
-      </div>
-      <button
-        onClick={() => {
-          setIsVisible(false);
-          setTimeout(onClose, 300); // Allow for fade out animation
-        }}
-        className={`flex-shrink-0 ${
-          type === 'success' ? 'text-green-500 hover:text-green-700' : 'text-red-500 hover:text-red-700'
-        }`}
-      >
-        <X size={16} />
-      </button>
-    </div>
+    </AnimatePresence>
   );
 };
 

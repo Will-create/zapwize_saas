@@ -3,14 +3,18 @@ import { Bell, ChevronDown, User, Settings, LogOut, Home } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { notificationsService } from '../../services/api';
+import { useTranslation } from 'react-i18next';
 
 const TopBar = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const { t } = useTranslation();
+
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
+
   const profileRef = useRef<HTMLDivElement>(null);
   const notificationsRef = useRef<HTMLDivElement>(null);
 
@@ -21,14 +25,13 @@ const TopBar = () => {
   const fetchNotifications = async () => {
     try {
       const fetchedNotifications = await notificationsService.fetchNotifications('unread');
-      setNotifications(fetchedNotifications.slice(0, 5)); // Show only the latest 5 unread notifications
+      setNotifications(fetchedNotifications.slice(0, 5));
       setUnreadCount(fetchedNotifications.length);
     } catch (error) {
       console.error('Failed to fetch notifications:', error);
     }
   };
 
-  // Handle click outside to close dropdowns
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
@@ -45,7 +48,6 @@ const TopBar = () => {
     };
   }, []);
 
-  // Handle logout
   const handleLogout = () => {
     logout();
     navigate('/');
@@ -57,7 +59,7 @@ const TopBar = () => {
         <Link
           to="/"
           className="text-gray-500 hover:text-gray-700 p-2 rounded-lg hover:bg-gray-100 mr-2"
-          title="Go to Homepage"
+          title={t('topbar.goHome')}
         >
           <Home size={20} />
         </Link>
@@ -69,7 +71,7 @@ const TopBar = () => {
           <button
             onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             className="p-2 rounded-full hover:bg-gray-100 text-gray-600 focus:outline-none relative"
-            aria-label="Notifications"
+            aria-label={t('topbar.notifications')}
           >
             <Bell size={20} />
             {unreadCount > 0 && (
@@ -82,13 +84,13 @@ const TopBar = () => {
           {isNotificationsOpen && (
             <div className="absolute right-0 mt-2 w-80 bg-white rounded-md shadow-lg py-1 z-50 border border-gray-100">
               <div className="px-4 py-2 border-b border-gray-100 flex justify-between items-center">
-                <h3 className="text-sm font-medium text-gray-900">Notifications</h3>
+                <h3 className="text-sm font-medium text-gray-900">{t('topbar.notifications')}</h3>
                 <Link
                   to="/dashboard/notifications"
                   className="text-xs text-blue-600 hover:text-blue-800"
                   onClick={() => setIsNotificationsOpen(false)}
                 >
-                  View All
+                  {t('topbar.viewAll')}
                 </Link>
               </div>
               {notifications.map((notification) => (
@@ -98,7 +100,7 @@ const TopBar = () => {
                 </div>
               ))}
               {notifications.length === 0 && (
-                <div className="px-4 py-2 text-sm text-gray-500">No new notifications</div>
+                <div className="px-4 py-2 text-sm text-gray-500">{t('topbar.noNewNotifications')}</div>
               )}
             </div>
           )}
@@ -122,7 +124,7 @@ const TopBar = () => {
               </div>
             )}
             <span className="hidden md:block text-sm font-medium text-gray-700">
-              {user?.name || 'User'}
+              {user?.name || t('topbar.user')}
             </span>
             <ChevronDown size={16} className="text-gray-500" />
           </button>
@@ -139,7 +141,7 @@ const TopBar = () => {
                 onClick={() => setIsProfileOpen(false)}
               >
                 <User size={16} className="mr-2" />
-                <span>Profile</span>
+                <span>{t('topbar.profile')}</span>
               </Link>
               <Link
                 to="/dashboard/settings"
@@ -147,14 +149,14 @@ const TopBar = () => {
                 onClick={() => setIsProfileOpen(false)}
               >
                 <Settings size={16} className="mr-2" />
-                <span>Settings</span>
+                <span>{t('topbar.settings')}</span>
               </Link>
               <button
                 className="flex items-center w-full px-4 py-2 text-sm text-red-600 hover:bg-gray-50"
                 onClick={handleLogout}
               >
                 <LogOut size={16} className="mr-2" />
-                <span>Logout</span>
+                <span>{t('topbar.logout')}</span>
               </button>
             </div>
           )}

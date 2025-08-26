@@ -5,7 +5,7 @@ import { Lock, Eye, EyeOff } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 
 const ChangePassword = () => {
-  const { t } = useTranslation('changePassword');
+  const { t } = useTranslation();
 
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');

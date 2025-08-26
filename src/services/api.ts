@@ -1,5 +1,5 @@
-import axios from 'axios';
-import { handleApiError, extractErrorMessage } from '../utils/errorHandler';
+import axios, { AxiosRequestConfig, AxiosResponse, AxiosError } from 'axios';
+import { extractErrorMessage } from '../utils/errorHandler';
 
 const BASE_URL = 'https://zapwize.com';
 
@@ -16,11 +16,13 @@ api.interceptors.request.use(
   (config: any) => {
     const token = localStorage.getItem('token');
     if (token) {
-      config.headers['x-token'] = token;
+      if (config.headers) {
+        config.headers['x-token'] = token;
+      }
     }
     return config;
   },
-  (error: any) => {
+  (error: AxiosError) => {
     console.error('Request error:', error);
     return Promise.reject(error);
   }
@@ -28,8 +30,8 @@ api.interceptors.request.use(
 
 // Response interceptor to handle common errors
 api.interceptors.response.use(
-  (response: any) => response,
-  (error: any) => {
+  (response: AxiosResponse) => response,
+  (error: AxiosError) => {
     console.error('Response error:', error.response?.data || error.message);
     
     if (error.response?.status === 401) {
@@ -41,23 +43,23 @@ api.interceptors.response.use(
 );
 
 // API request wrapper following the backend pattern
-const makeApiRequest = async (schema: string, data?: any) => {
+export const makeApiRequest = async (schema: string, data?: unknown) => {
   try {
-    const payload = {
-      schema,
-      ...(data && { data }),
-    };
+    const payload: { schema: string; data?: any } = { schema };
+
+    if (data)
+    payload.data = data;
     
     console.log('API Request:', { schema, data });
     const response = await api.post('/api/', payload);
     console.log('API Response:', response);
     
     return response.data;
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('API Error:', {
       schema,
       data,
-      error: error.response?.data || error.message
+      error: error instanceof AxiosError ? error.response?.data || error.message : error
     });
     const errorMessage = extractErrorMessage(error);
     
@@ -107,7 +109,7 @@ export const authService = {
       }
       
       throw new Error('Invalid login response');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Login error:', error);
       throw error;
     }
@@ -132,7 +134,7 @@ export const authService = {
         };
       }
       throw new Error('Invalid registration response');
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Register error:', error);
       throw error;
     }
@@ -148,70 +150,87 @@ export const authService = {
     localStorage.removeItem('token');
   },
   
-  updateProfile: async (data: any) => {
+  updateProfile: async (data: unknown) => {
     const response = await makeApiRequest('account_update', data);
     return response;
   },
   
   resetPassword: async (email: string) => {
-    return makeApiRequest('account_reset', { email });
+    return await makeApiRequest('account_reset', { email });
   },
   
   verifyAccount: async (token: string) => {
-    return makeApiRequest('account_verify', { token });
+    return await makeApiRequest('account_verify', { token });
   },
   
   updatePassword: async (data: { currentPassword: string; newPassword: string }) => {
-    return makeApiRequest('account_password', {
+    return await makeApiRequest('account_password', {
       current_password: data.currentPassword,
       new_password: data.newPassword
     });
+  },
+
+  // 2FA services
+  generateTwoFactorSecret: async () => {
+    return await makeApiRequest('account_2fa_generate');
+  },
+
+  enableTwoFactorAuth: async (token: string) => {
+    return await makeApiRequest('account_2fa_enable', { token });
+  },
+
+  disableTwoFactorAuth: async () => {
+    return await makeApiRequest('account_2fa_disable');
+  },
+
+  verifyTwoFactorToken: async (token: string) => {
+    return await makeApiRequest('account_2fa_verify', { token });
   },
 };
 
 // Numbers service implementation
 export const numbersService = {
   create: async (data: { name: string; phone: string; webhook: string, type: string }) => {
-    return makeApiRequest('numbers_insert', data);
+    return await makeApiRequest('numbers_insert', data);
   },
 
   read: async (id: string) => {
-    return makeApiRequest('numbers_read/' + id);
+    return await makeApiRequest('numbers_read/' + id);
   },
 
   list: async () => {
-    return makeApiRequest('numbers_list');
+    return await makeApiRequest('numbers_list');
   },
 
   remove: async (id: string) => {
-    return makeApiRequest('numbers_remove/' + id);
+    return await makeApiRequest('numbers_remove/' + id);
   },
 
   logout: async (id: string) => {
-    return makeApiRequest('numbers_logout/' + id);
+    return await makeApiRequest('numbers_logout/' + id);
   },
   pause: async (id: string) => {
-    return makeApiRequest('numbers_pause/' + id);
+    return await makeApiRequest('numbers_pause/' + id);
   },
 
   resume: async (id: string) => {
-    return makeApiRequest('numbers_resume/' + id);
+    return await makeApiRequest('numbers_resume/' + id);
   },
 
   stop: async (id: string) => {
-    return makeApiRequest('numbers_pause/' + id);
+    return await makeApiRequest('numbers_pause/' + id);
   },
   qr: async (phone: string) => {
-    return makeApiRequest('instance_qr/' + phone);
+    return await makeApiRequest('instance_qr/' + phone);
   },
   pairring: async (phone: string) => {
-    return makeApiRequest('instance_pairring/' + phone);
+    return await makeApiRequest('instance_pairring/' + phone);
   },
   state: async (phone: string) => {
-    return makeApiRequest('instance_state/' + phone);
+    return await makeApiRequest('instance_state/' + phone);
   },
   status: async (id: string) => {
-    return makeApiRequest('numbers_status/' + id);
+    return await makeApiRequest('numbers_status/' + id);
   }
 
 
@@ -287,19 +306,19 @@ export const notificationsService = {
 
 export const billingService = {
   getCurrentPlan: async (numberid: string) => {
-    return makeApiRequest('billing_current_plan/' + numberid);
+    return await makeApiRequest('billing_current_plan/' + numberid);
   },
 
   getAvailablePlans: async () => {
-    return makeApiRequest('billing_plans');
+    return await makeApiRequest('billing_plans');
   },
 
   initiatePlanUpgrade: async (planid: string, numberid: string, qty: number = 1) => {
-    return makeApiRequest('billing_plans_upgrade/' + numberid, { planid, numberid, qty: 1 });
+    return await makeApiRequest('billing_plans_upgrade/' + numberid, { planid, numberid, qty: 1 });
   },
 
   getBillingHistory: async (numberid: string) => {
-    return makeApiRequest('billing_history/' + numberid);
+    return await makeApiRequest('billing_history/' + numberid);
   },
 
   validateCoupon: async (couponCode: string, planId: string, numberid: string) => {
@@ -325,7 +344,7 @@ export const billingService = {
   },
 
   initiatePlanUpgradeWithCoupon: async (planId: string, numberid: string, cycle: 'monthly' | 'yearly', couponCode?: string) => {
-    return makeApiRequest('billing_plans_upgrade/' + numberid, { 
+    return await makeApiRequest('billing_plans_upgrade/' + numberid, { 
       planid: planId, 
       numberid, 
       cycle,
@@ -349,32 +368,45 @@ export const billingService = {
 
 export const APIKeysService = {
   create: async (data: { name: string; value: string; permissions: string[] }) => {
-    return makeApiRequest('apikeys_create', data);
+    return await makeApiRequest('apikeys_create', data);
   },
 
   read: async (id: string) => {
-    return makeApiRequest('apikeys_read/' + id);
+    return await makeApiRequest('apikeys_read/' + id);
   },
 
   list: async () => {
-    return makeApiRequest('apikeys');
+    return await makeApiRequest('apikeys');
   },
 
   remove: async (id: string) => {
-    return makeApiRequest('apikeys_remove/' + id);
+    return await makeApiRequest('apikeys_remove/' + id);
   },
 
-  update: async (id: string, data: any) => {
-    return makeApiRequest('apikeys_update/' + id, data);
+  update: async (id: string, data: unknown) => {
+    return await makeApiRequest('apikeys_update/' + id, data);
   },
 
   generate: async (id: string) => {
-    return makeApiRequest('apikeys_generate/' + id);
+    return await makeApiRequest('apikeys_generate/' + id);
   },
 
   reset: async (id: string) => {
-    return makeApiRequest('apikeys_reset/' + id);
+    return await makeApiRequest('apikeys_reset/' + id);
   },
 }
+
+// services/api.js
+
+export const cliAuthService = {
+  // Check current user session
+  getProfile: async () => {
+    return await makeApiRequest('account'); // schema 'account' validates cookie
+  },
+  // Approve CLI login
+  approve: async (state: string) => {
+    return await makeApiRequest('cli_approve', { state });
+  }
+};
 
 export default api;
